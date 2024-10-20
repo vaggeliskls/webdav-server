@@ -1,0 +1,47 @@
+version: "3.8"
+
+services:
+  webdav:
+    image: ghcr.io/vaggeliskls/webdav-server:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    platform: linux/amd64
+    volumes:
+      - ./webdav-data:/var/lib/dav/data
+    networks:
+      - webdav-network
+    env_file:
+      - .env
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.webdav.service=webdav"
+      # Register Middleware ====================================================
+      - "traefik.http.routers.webdav.middlewares=compresstraefik"
+      # =================================================================================
+      - "traefik.http.middlewares.compresstraefik.compress=true"
+      - "traefik.http.services.webdav.loadbalancer.server.port=8080"
+      - "traefik.http.services.webdav.loadbalancer.passhostheader=true"
+      ## Use PathPrefix rule to catch all requests
+      - "traefik.http.routers.webdav.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.webdav.entrypoints=web,websecure"
+
+  webdav-proxy:
+    image: traefik:v3.1
+    platform: linux/amd64
+    command:
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - webdav-network
+
+networks:
+  webdav-network:
+    driver: bridge
