@@ -33,8 +33,6 @@ elif [ "$BASIC_AUTH_ENABLED" = "true" ]; then
     # Prepare the password file
     touch "/var/lib/dav/user.passwd"
     echo "$BASIC_USERS" | tr ' ' '\n' | while IFS=':' read -r USERNAME PASSWORD; do
-        # Output the username and password
-        echo "Username: $USERNAME, Password: $PASSWORD"
         HASH="`printf '%s' "$USERNAME:$BASIC_AUTH_REALM:$PASSWORD" | md5sum | awk '{print $1}'`"
         printf '%s\n' "$USERNAME:$BASIC_AUTH_REALM:$HASH" >> /var/lib/dav/user.passwd
     done
