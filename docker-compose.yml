@@ -17,7 +17,7 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.webdav.service=webdav"
       # Register Middleware ====================================================
-      - "traefik.http.routers.webdav.middlewares=compresstraefik"
+      - "traefik.http.routers.webdav.middlewares=compresstraefik,ratelimit"
       # =================================================================================
       - "traefik.http.middlewares.compresstraefik.compress=true"
       - "traefik.http.services.webdav.loadbalancer.server.port=8080"
@@ -25,6 +25,10 @@ services:
       ## Use PathPrefix rule to catch all requests
       - "traefik.http.routers.webdav.rule=PathPrefix(`/`)"
       - "traefik.http.routers.webdav.entrypoints=web,websecure"
+      ## Rate Limiting Middleware (Per IP) =====================================
+      - "traefik.http.middlewares.ratelimit.ratelimit.average=5"
+      - "traefik.http.middlewares.ratelimit.ratelimit.burst=6"
+      - "traefik.http.middlewares.ratelimit.ratelimit.sourcecriterion.ipstrategy.depth=1"
 
   webdav-proxy:
     image: traefik:v3.1
