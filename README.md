@@ -38,16 +38,19 @@ BASIC_USERS=alice:alice123 bob:bob123
 ```
 
 ### 🔐 OAuth Authentication
-OAuth authentication (example with Google OAuth) configuration:
+OAuth authentication (example with Keycloak) configuration:
 ```
 OAUTH_ENABLED=true
-OAUTH_CLIENT_ID=1234567890-abcdefghijklm.apps.googleusercontent.com
-OAUTH_CLIENT_SECRET=ABC123def456GHI789jkl0mnopqrs
-OAUTH_SCOPE="openid email profile"
-OAUTH_REDIRECT_URI=http://localhost
-OAUTH_METADATA_URL="https://accounts.google.com/.well-known/openid-configuration"
-OAUTH_CRYPTO_PASSPHRASE=mysecurepassphrase
-OAUTH_FORWARDED_HEADER=X-Forwarded-Host,X-Forwarded-Port,X-Forwarded-Proto
+OIDCProviderMetadataURL="http://keycloak/keycloak-auth/realms/master/.well-known/openid-configuration"
+OIDCRedirectURI="http://my-domain.local/redirect_uri"
+OIDCDefaultURL="http://my-domain.local"
+OIDCCryptoPassphrase="randomly_generated_secure_passphrase"
+OIDCClientID="webdav-client"
+OIDCClientSecret="ABC123def456GHI789jkl0mnopqrs"
+OIDCProviderTokenEndpointAuth="client_secret_basic"
+OIDCRemoteUserClaim="preferred_username"
+OIDCScope="openid email profile"
+OIDCXForwardedHeaders="X-Forwarded-Host"
 ```
 
 ### 🔐 LDAP Authentication
