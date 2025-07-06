@@ -13,8 +13,22 @@ comment_block() {
     sed -i "/# ${block_name}_START/,/# ${block_name}_END/ s/^[^#]/# &/" "/usr/local/apache2/conf/webdav.conf"
 }
 
+# Function to dynamically add OIDC environment variables
+add_oidc_config() {
+    # Find all environment variables with OIDC prefix and add them to the config
+    for var in $(env | grep "^OIDC" | cut -d'=' -f1); do
+        # Get the actual value of the environment variable
+        var_value=$(eval echo \$$var)
+        # Insert the directive after the LoadModule line with actual value
+        sed -i "/LoadModule auth_openidc_module/a\\
+$var \"$var_value\"" "/usr/local/apache2/conf/webdav.conf"
+    done
+}
+
 envsubst < /usr/local/apache2/conf/webdav.conf.template > /usr/local/apache2/conf/webdav.conf
 envsubst < /usr/local/apache2/conf/virtualhost.conf.template > /usr/local/apache2/conf/virtualhost.conf
+
+add_oidc_config
 
 comment_block "OAUTH_BLOCK"
 comment_block "LDAP_BLOCK"
