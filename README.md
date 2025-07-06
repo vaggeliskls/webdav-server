@@ -38,7 +38,7 @@ BASIC_USERS=alice:alice123 bob:bob123
 ```
 
 ### 🔐 OAuth Authentication
-OAuth authentication (example with Keycloak) configuration:
+OAuth authentication ([example with Keycloak](https://github.com/vaggeliskls/devops-docker-projects/tree/main/charts/keycloak-webdav)) configuration:
 ```
 OAUTH_ENABLED=true
 OIDCProviderMetadataURL="http://keycloak/keycloak-auth/realms/master/.well-known/openid-configuration"
