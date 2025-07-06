@@ -43,7 +43,6 @@ OAuth authentication ([example with Keycloak](https://github.com/vaggeliskls/dev
 OAUTH_ENABLED=true
 OIDCProviderMetadataURL="http://keycloak/keycloak-auth/realms/master/.well-known/openid-configuration"
 OIDCRedirectURI="http://my-domain.local/redirect_uri"
-OIDCDefaultURL="http://my-domain.local"
 OIDCCryptoPassphrase="randomly_generated_secure_passphrase"
 OIDCClientID="webdav-client"
 OIDCClientSecret="ABC123def456GHI789jkl0mnopqrs"
