@@ -52,6 +52,9 @@ OIDCScope="openid email profile"
 OIDCXForwardedHeaders="X-Forwarded-Host"
 ```
 
+> More examples with different identity providers can be found on the [mod_auth_openidc](https://github.com/OpenIDC/mod_auth_openidc) GitHub page.
+
+
 ### 🔐 LDAP Authentication
 LDAP integration for centralized user management:
 ```
