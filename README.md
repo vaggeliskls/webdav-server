@@ -75,6 +75,28 @@ LDAP_BIND_PASSWORD=securepassword
 3. Open http://localhost or your server's IP in a browser or WebDAV client to start using the service.
 
 
+## 📑 WebDAV Methods and Access Control
+
+You can set the allowed WebDAV/HTTP methods via the `WEBDAV_OPERATIONS` environment variable in your `.env` file. This will dynamically control which methods are permitted by the server at runtime.
+
+| Method      | Purpose                                                      |
+|-------------|--------------------------------------------------------------|
+| GET         | Download a file or resource                                  |
+| OPTIONS     | Discover server-supported methods                            |
+| PROPFIND    | List directory contents, get resource metadata               |
+| PUT         | Upload a file                                                |
+| DELETE      | Delete a file or resource                                    |
+| MKCOL       | Create a new collection (folder)                             |
+| COPY        | Copy a resource                                              |
+| MOVE        | Move or rename a resource                                    |
+| LOCK        | Lock a resource                                              |
+| UNLOCK      | Unlock a resource                                            |
+| PROPPATCH   | Set or remove resource properties                            |
+| REPORT      | Query for information (advanced WebDAV clients)              |
+| PATCH       | Partial update of a resource                                 |
+| HEAD        | Retrieve headers only (no body)                              |
+| POST        | Submit data (rarely used in WebDAV, sometimes for locking)   |
+
 ## 📚 References
 
 - [Docker Apache WebDAV](https://github.com/mgutt/docker-apachewebdav)
