@@ -60,6 +60,5 @@ fi
 
 echo "Include conf/webdav.conf" >> /usr/local/apache2/conf/httpd.conf
 echo "Include conf/virtualhost.conf" >> /usr/local/apache2/conf/httpd.conf
-rm -rf /usr/local/apache2/conf/*.template
 
 exec "$@"
