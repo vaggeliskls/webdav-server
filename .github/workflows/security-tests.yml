@@ -3,6 +3,10 @@ name: Security Tests
 on:
   pull_request:
 
+concurrency:
+  group: security-tests-${{ github.head_ref }}
+  cancel-in-progress: true
+
 jobs:
   security-tests:
     name: "Security Tests"
