@@ -15,7 +15,6 @@ RUN groupadd -r webuser && useradd -r -g webuser webuser
 # Create necessary directories and adjust ownership
 RUN mkdir -p "/var/www/html" && \
     mkdir -p "/var/lib/dav/data" && \
-    touch "/var/lib/dav/DavLock" && \
     chown -R webuser:webuser "/var/www/html" "/var/lib/dav" "/usr/local/apache2"
 
 # Uncomment necessary LoadModule lines in httpd.conf
