@@ -4,22 +4,22 @@ A lightweight, Docker-based WebDAV server built on Apache httpd with flexible pe
 
 > **Pre-built image:** `ghcr.io/vaggeliskls/webdav-server:latest`
 
-## Prerequisites
+## 📋 Prerequisites
 
 - Docker 20.0+
 
-## Key Features
+## ✨ Key Features
 
-- **Per-folder access control** — different folders can have different auth rules and user restrictions
-- **Public folders** — mix unauthenticated and authenticated folders on the same server
-- **Per-user permissions** — restrict specific folders to specific users
-- **Multiple auth methods** — Basic, LDAP, OAuth/OIDC (or LDAP + Basic combined)
-- **Configurable methods** — control read-only vs read-write access per folder
-- **CORS support** — configurable for web clients
-- **Health check endpoint** — optional `/_health` route
-- **Proxy-ready** — works behind Traefik or any reverse proxy
+- 🗂️ **Per-folder access control** — different folders can have different auth rules and user restrictions
+- 🌍 **Public folders** — mix unauthenticated and authenticated folders on the same server
+- 👤 **Per-user permissions** — restrict specific folders to specific users
+- 🔐 **Multiple auth methods** — Basic, LDAP, OAuth/OIDC (or LDAP + Basic combined)
+- ⚙️ **Configurable methods** — control read-only vs read-write access per folder
+- 🌐 **CORS support** — configurable for web clients
+- ❤️ **Health check endpoint** — optional `/_health` route
+- 🔁 **Proxy-ready** — works behind Traefik or any reverse proxy
 
-## Quick Start
+## 🚀 Quick Start
 
 ```bash
 docker compose up --build
@@ -27,7 +27,9 @@ docker compose up --build
 
 Access at http://localhost.
 
-## Folder Permissions
+For more deployment scenarios see [Deployment Examples](docs/examples.md).
+
+## 📁 Folder Permissions
 
 The main configuration point. Controls which folders exist, who can access them, and whether they are read-only or read-write.
 
@@ -42,18 +44,18 @@ Folders are auto-created at startup (`AUTO_CREATE_FOLDERS=true`).
 
 Leave `FOLDER_PERMISSIONS` empty to fall back to single-root mode (all paths, one auth method).
 
-## Authentication
+## 🔐 Authentication
 
 Set auth method via environment variables. Authentication applies to all non-public folders.
 
-### Basic Auth (bcrypt)
+### 🔑 Basic Auth (bcrypt)
 
 ```env
 BASIC_AUTH_ENABLED=true
 BASIC_USERS="alice:alice123 bob:bob123"
 ```
 
-### LDAP
+### 🏢 LDAP
 
 ```env
 LDAP_ENABLED=true
@@ -64,7 +66,7 @@ LDAP_BIND_DN=uid=searchuser,ou=users,dc=example,dc=com
 LDAP_BIND_PASSWORD=securepassword
 ```
 
-### LDAP + Basic fallback
+### ↩️ LDAP + Basic fallback
 
 Set both flags to `true`. Apache tries LDAP first, falls back to the local user file if LDAP authentication fails.
 
@@ -73,7 +75,7 @@ LDAP_ENABLED=true
 BASIC_AUTH_ENABLED=true
 ```
 
-### OAuth / OpenID Connect
+### 🌐 OAuth / OpenID Connect
 
 ```env
 OAUTH_ENABLED=true
@@ -88,7 +90,7 @@ OIDCScope="openid email profile"
 
 > More provider examples: [mod_auth_openidc](https://github.com/OpenIDC/mod_auth_openidc)
 
-## Method Control
+## 🛠️ Method Control
 
 ```env
 RO_METHODS="GET HEAD OPTIONS PROPFIND"
@@ -99,7 +101,7 @@ Override either variable to customise which HTTP methods are allowed per access 
 
 See [WebDAV Methods Reference](docs/webdav-methods.md) for the full list of supported methods.
 
-## Optional Features
+## 🧩 Optional Features
 
 ```env
 # Configurable server hostname
@@ -113,7 +115,7 @@ CORS_ORIGIN=*
 HEALTH_CHECK_ENABLED=false
 ```
 
-## Security Testing
+## 🔒 Security Testing
 
 ```bash
 ./test-security.sh http://localhost
@@ -121,7 +123,9 @@ HEALTH_CHECK_ENABLED=false
 
 Runs checks for unauthenticated access, wrong credentials, method restrictions, path traversal, user isolation, security headers, and the health check endpoint.
 
-## References
+## 📚 References
 
+- [Deployment Examples](docs/examples.md)
+- [WebDAV Methods Reference](docs/webdav-methods.md)
 - [mod_auth_openidc](https://github.com/OpenIDC/mod_auth_openidc)
 - [What is WebDAV?](https://www.jscape.com/blog/what-is-webdav)
