@@ -253,13 +253,8 @@ generate_passwd_file() {
 apply_cors() {
     if [ "${CORS_ENABLED:-false}" = "true" ]; then
         echo "--> CORS enabled (origin: ${CORS_ORIGIN:-*})"
-        cat >> "${CONF_DIR}/virtualhost.conf" << EOF
-
-    Header always set Access-Control-Allow-Origin "${CORS_ORIGIN:-*}"
-    Header always set Access-Control-Allow-Methods "GET,PUT,DELETE,PROPFIND,OPTIONS,MKCOL,COPY,MOVE,LOCK,UNLOCK,HEAD"
-    Header always set Access-Control-Allow-Headers "Authorization,Content-Type,Depth,Destination,Overwrite,DAV,If"
-    Header always set Access-Control-Allow-Credentials "true"
-EOF
+        sed -i "s|</VirtualHost>|    Header always set Access-Control-Allow-Origin \"${CORS_ORIGIN:-*}\"\n    Header always set Access-Control-Allow-Methods \"GET,PUT,DELETE,PROPFIND,OPTIONS,MKCOL,COPY,MOVE,LOCK,UNLOCK,HEAD\"\n    Header always set Access-Control-Allow-Headers \"Authorization,Content-Type,Depth,Destination,Overwrite,DAV,If\"\n    Header always set Access-Control-Allow-Credentials \"true\"\n</VirtualHost>|" \
+            "${CONF_DIR}/virtualhost.conf"
     fi
 }
 
@@ -270,13 +265,8 @@ apply_health_check() {
     if [ "${HEALTH_CHECK_ENABLED:-false}" = "true" ]; then
         echo "--> Health check enabled at /_health"
         echo "OK" > "${DAV_DIR}/health.html"
-        cat >> "${CONF_DIR}/virtualhost.conf" << EOF
-
-    Alias /_health ${DAV_DIR}/health.html
-    <Location /_health>
-        Require all granted
-    </Location>
-EOF
+        sed -i "s|</VirtualHost>|    Alias /_health ${DAV_DIR}/health.html\n    <Location /_health>\n        Require all granted\n    </Location>\n</VirtualHost>|" \
+            "${CONF_DIR}/virtualhost.conf"
     fi
 }
 
