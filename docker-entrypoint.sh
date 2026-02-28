@@ -15,7 +15,20 @@ RW_METHODS="${RW_METHODS:-GET HEAD OPTIONS PROPFIND PUT DELETE MKCOL COPY MOVE L
 write_auth_directives() {
     local file="$1"
 
-    if [ "$LDAP_ENABLED" = "true" ]; then
+    if [ "$LDAP_ENABLED" = "true" ] && [ "$BASIC_AUTH_ENABLED" = "true" ]; then
+        # Combined: try LDAP first, fall back to local Basic Auth file
+        echo "--> Combined LDAP + Basic auth (provider chaining)"
+        cat >> "$file" << EOF
+    AuthType Basic
+    AuthName "WebDAV"
+    AuthBasicProvider ldap file
+    AuthLDAPURL "${LDAP_URL}/${LDAP_BASE_DN}?${LDAP_ATTRIBUTE}"
+    AuthLDAPBindDN "${LDAP_BIND_DN}"
+    AuthLDAPBindPassword "${LDAP_BIND_PASSWORD}"
+    AuthUserFile "${DAV_DIR}/user.passwd"
+EOF
+
+    elif [ "$LDAP_ENABLED" = "true" ]; then
         cat >> "$file" << EOF
     AuthType Basic
     AuthName "WebDAV"
@@ -40,7 +53,7 @@ EOF
         # Basic Auth (default)
         cat >> "$file" << EOF
     AuthType Basic
-    AuthName "${BASIC_AUTH_REALM:-WebDAV}"
+    AuthName "WebDAV"
     AuthUserFile "${DAV_DIR}/user.passwd"
 EOF
     fi
