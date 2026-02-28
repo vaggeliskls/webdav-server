@@ -125,6 +125,7 @@ Runs checks for unauthenticated access, wrong credentials, method restrictions, 
 
 ## 📚 References
 
+- [Use Cases](docs/use-cases.md)
 - [Deployment Examples](docs/examples.md)
 - [WebDAV Methods Reference](docs/webdav-methods.md)
 - [mod_auth_openidc](https://github.com/OpenIDC/mod_auth_openidc)
