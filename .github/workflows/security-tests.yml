@@ -4,30 +4,20 @@ on:
   pull_request:
 
 jobs:
-  test-basic-auth:
-    name: "Basic Auth — public + private"
+  security-tests:
+    name: "Security Tests"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - run: ./tests/scenario-1-basic-auth.sh
-
-  test-readonly:
-    name: "Read-only folders"
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - run: ./tests/scenario-2-readonly.sh
-
-  test-user-isolation:
-    name: "Per-user folder isolation"
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - run: ./tests/scenario-3-user-isolation.sh
-
-  test-public-only:
-    name: "Public server (no auth)"
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - run: ./tests/scenario-4-public-only.sh
+      - name: Build image
+        run: docker build -t webdav-test .
+      - name: "Basic Auth — public + private"
+        run: ./tests/scenario-1-basic-auth.sh --no-build
+      - name: "Read-only folders"
+        run: ./tests/scenario-2-readonly.sh --no-build
+      - name: "Per-user folder isolation"
+        run: ./tests/scenario-3-user-isolation.sh --no-build
+      - name: "Public server (no auth)"
+        run: ./tests/scenario-4-public-only.sh --no-build
+      - name: "LDAP authentication"
+        run: ./tests/scenario-5-ldap.sh --no-build
