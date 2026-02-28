@@ -284,6 +284,17 @@ apply_health_check() {
 }
 
 # ---------------------------------------------------------------------------
+# Block browser access if enabled (returns 403 for Mozilla/* User-Agents).
+# ---------------------------------------------------------------------------
+apply_browser_block() {
+    if [ "${BROWSER_ACCESS_BLOCKED:-false}" = "true" ]; then
+        echo "--> Browser access blocked (BROWSER_ACCESS_BLOCKED=true)"
+        sed -i "s|</VirtualHost>|    SetEnvIf User-Agent \"Mozilla\" block_browser\n    <Location />\n        Order Allow,Deny\n        Allow from all\n        Deny from env=block_browser\n    </Location>\n</VirtualHost>|" \
+            "${CONF_DIR}/virtualhost.conf"
+    fi
+}
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 
@@ -308,6 +319,7 @@ fi
 apply_oauth_config
 apply_cors
 apply_health_check
+apply_browser_block
 
 # Load mod_auth_openidc globally when OAuth is enabled.
 # LoadModule must be at server level, not inside Directory blocks.
