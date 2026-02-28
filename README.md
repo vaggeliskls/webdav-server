@@ -118,15 +118,16 @@ HEALTH_CHECK_ENABLED=false
 ## 🔒 Security Testing
 
 ```bash
-./test-security.sh http://localhost
+./tests/run-all.sh
 ```
 
-Runs checks for unauthenticated access, wrong credentials, method restrictions, path traversal, user isolation, security headers, and the health check endpoint.
+See [Security Tests](docs/tests.md) for all scenarios and options.
 
 ## 📚 References
 
 - [Use Cases](docs/use-cases.md)
 - [Deployment Examples](docs/examples.md)
 - [WebDAV Methods Reference](docs/webdav-methods.md)
+- [Security Tests](docs/tests.md)
 - [mod_auth_openidc](https://github.com/OpenIDC/mod_auth_openidc)
 - [What is WebDAV?](https://www.jscape.com/blog/what-is-webdav)

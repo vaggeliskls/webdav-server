@@ -1,0 +1,33 @@
+name: Security Tests
+
+on:
+  pull_request:
+
+jobs:
+  test-basic-auth:
+    name: "Basic Auth — public + private"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - run: ./tests/scenario-1-basic-auth.sh
+
+  test-readonly:
+    name: "Read-only folders"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - run: ./tests/scenario-2-readonly.sh
+
+  test-user-isolation:
+    name: "Per-user folder isolation"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - run: ./tests/scenario-3-user-isolation.sh
+
+  test-public-only:
+    name: "Public server (no auth)"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - run: ./tests/scenario-4-public-only.sh
