@@ -5,26 +5,29 @@ All test scripts live in [`tests/`](../tests/) and mirror the CI scenarios in [`
 ## Run all scenarios
 
 ```bash
-./tests/run-all.sh             # build image, then run all 4 scenarios
+./tests/run-all.sh             # build image, then run all scenarios
 ./tests/run-all.sh --no-build  # skip build (image already exists)
 ./tests/run-all.sh 1 3         # run only specific scenarios
 ```
 
-## Run a single scenario
+New scenario scripts are picked up automatically — no changes to `run-all.sh` needed.
 
-| Script | What it tests |
-|--------|--------------|
-| [`tests/scenario-1-basic-auth.sh`](../tests/scenario-1-basic-auth.sh) | Public + Basic Auth private folder — full suite |
-| [`tests/scenario-2-readonly.sh`](../tests/scenario-2-readonly.sh) | All folders read-only — writes blocked |
-| [`tests/scenario-3-user-isolation.sh`](../tests/scenario-3-user-isolation.sh) | Per-user folder isolation — cross-access denied |
-| [`tests/scenario-4-public-only.sh`](../tests/scenario-4-public-only.sh) | No auth — public readable, PUT blocked |
+## Scenarios
+
+| Script | What it tests | Extra dependencies |
+|--------|--------------|-------------------|
+| [`tests/scenario-1-basic-auth.sh`](../tests/scenario-1-basic-auth.sh) | Public + Basic Auth private folder — full suite | — |
+| [`tests/scenario-2-readonly.sh`](../tests/scenario-2-readonly.sh) | All folders read-only — writes blocked | — |
+| [`tests/scenario-3-user-isolation.sh`](../tests/scenario-3-user-isolation.sh) | Per-user folder isolation — cross-access denied | — |
+| [`tests/scenario-4-public-only.sh`](../tests/scenario-4-public-only.sh) | No auth — public readable, PUT blocked | — |
+| [`tests/scenario-5-ldap.sh`](../tests/scenario-5-ldap.sh) | LDAP authentication — valid/invalid credentials, per-user isolation | `bitnami/openldap` (pulled automatically) |
 
 ```bash
-./tests/scenario-2-readonly.sh            # build + test
-./tests/scenario-2-readonly.sh --no-build # skip build
+./tests/scenario-5-ldap.sh            # build + test
+./tests/scenario-5-ldap.sh --no-build # skip build
 ```
 
-Each script manages its own container lifecycle: it starts the container, waits for the health endpoint, runs the assertions, and cleans up on exit (even on failure).
+Each script manages its own container lifecycle: it starts the container(s), waits for the health endpoint, runs the assertions, and cleans up on exit (even on failure). Scenario 5 also creates and removes a dedicated Docker network for LDAP communication.
 
 ## Full security suite
 

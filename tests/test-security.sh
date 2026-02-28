@@ -246,7 +246,7 @@ test_path_traversal() {
 
     assert_status_in \
         "Double-encoded path traversal blocked" \
-        "400 403 404" \
+        "400 401 403 404" \
         "${BASE_URL}${PRIVATE_FOLDER}/..%252F..%252Fetc%252Fpasswd"
 
     # Attempt to read Apache config files

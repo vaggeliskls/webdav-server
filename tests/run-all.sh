@@ -33,18 +33,22 @@ SCENARIOS=""
 for arg in "$@"; do
     case "$arg" in
         --no-build) NO_BUILD_FLAG="--no-build" ;;
-        [1-4])      SCENARIOS="$SCENARIOS $arg" ;;
+        [0-9]*)     SCENARIOS="$SCENARIOS $arg" ;;
         *)
             printf "${RED}Unknown argument: %s${NC}\n" "$arg"
-            printf "Usage: %s [--no-build] [1 2 3 4]\n" "$0"
+            printf "Usage: %s [--no-build] [1 2 3 ...]\n" "$0"
             exit 1
             ;;
     esac
 done
 
-# Default: run all scenarios
+# Default: auto-discover all scenario-N-*.sh scripts in order
 if [ -z "$SCENARIOS" ]; then
-    SCENARIOS="1 2 3 4"
+    for f in "$SCRIPT_DIR"/scenario-[0-9]*.sh; do
+        [ -f "$f" ] || continue
+        num=$(basename "$f" | sed 's/scenario-\([0-9]*\)-.*/\1/')
+        SCENARIOS="$SCENARIOS $num"
+    done
 fi
 
 # ---------------------------------------------------------------------------
