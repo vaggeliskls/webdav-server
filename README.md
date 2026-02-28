@@ -1,103 +1,133 @@
-# 🌐 Simple & Powerful WebDAV Server
+# 🌐 WebDAV Server
 
-The **WebDAV Server** is a lightweight, customizable solution built with Docker, designed for secure file sharing and remote access. It offers flexible configuration options and supports multiple authentication methods, including basic authentication, LDAP, and OAuth. With minimal setup, this server is ideal for both personal and enterprise use cases where easy deployment and secure access are key.
+A lightweight, Docker-based WebDAV server built on Apache httpd with flexible per-folder access control and multiple authentication options.
 
+> **Pre-built image:** `ghcr.io/vaggeliskls/webdav-server:latest`
 
-> [!NOTE]
-> The pre-built Docker image is available at:  **`ghcr.io/vaggeliskls/webdav-server:latest`**
+## 📋 Prerequisites
 
-## 📦 Prerequisites
+- Docker 20.0+
 
-Before getting started, make sure you have the following:
+## ✨ Key Features
 
-- **Docker** version **20.0** or higher
-- Basic knowledge of Docker and WebDAV
+- 🗂️ **Per-folder access control** — different folders can have different auth rules and user restrictions
+- 🌍 **Public folders** — mix unauthenticated and authenticated folders on the same server
+- 👤 **Per-user permissions** — restrict specific folders to specific users
+- 🔐 **Multiple auth methods** — Basic, LDAP, OAuth/OIDC (or LDAP + Basic combined)
+- ⚙️ **Configurable methods** — control read-only vs read-write access per folder
+- 🌐 **CORS support** — configurable for web clients
+- ❤️ **Health check endpoint** — optional `/_health` route
+- 🔁 **Proxy-ready** — works behind Traefik or any reverse proxy
 
-## 🚀 Key Features
-
-- **Effortless Deployment**: Set up a fully operational WebDAV server quickly using Docker.
-- **Flexible Authentication**:
-  - Basic Authentication 🛡️
-  - LDAP Authentication 🛡️
-  - OAuth Authentication 🛡️
-- **Proxy-Ready**: Easily integrate with reverse proxies to add more authentication layers.
-- **Authentication is Optional**: The server runs without authentication by default, allowing flexibility for your setup.
-
-## 🔧 Authentication Setup
-
-You can enable various authentication mechanisms using environment variables in a `.env` file. Here’s how to configure each one:
-
-### 🔐 Basic Authentication
-
-To enable basic authentication with username and password protection:
+## 🚀 Quick Start
 
 ```bash
+docker compose up --build
+```
+
+Access at http://localhost.
+
+For more deployment scenarios see [Deployment Examples](docs/examples.md).
+
+## 📁 Folder Permissions
+
+The main configuration point. Controls which folders exist, who can access them, and whether they are read-only or read-write.
+
+```env
+# Format: "/path:users:mode" comma-separated
+# users: public | * | alice bob (space-separated)
+# mode:  ro (uses RO_METHODS) | rw (uses RW_METHODS)
+FOLDER_PERMISSIONS="/public:public:ro,/shared:*:ro,/private:alice bob:rw,/admin:admin:rw"
+```
+
+Folders are auto-created at startup (`AUTO_CREATE_FOLDERS=true`).
+
+Leave `FOLDER_PERMISSIONS` empty to fall back to single-root mode (all paths, one auth method).
+
+## 🔐 Authentication
+
+Set auth method via environment variables. Authentication applies to all non-public folders.
+
+### 🔑 Basic Auth (bcrypt)
+
+```env
 BASIC_AUTH_ENABLED=true
-BASIC_AUTH_REALM=WebDAV
-BASIC_USERS=alice:alice123 bob:bob123
+BASIC_USERS="alice:alice123 bob:bob123"
 ```
 
-### 🔐 OAuth Authentication
-OAuth authentication ([example with Keycloak](https://github.com/vaggeliskls/devops-docker-projects/tree/main/charts/keycloak-webdav)) configuration:
-```
-OAUTH_ENABLED=true
-OIDCProviderMetadataURL="http://keycloak/keycloak-auth/realms/master/.well-known/openid-configuration"
-OIDCRedirectURI="http://my-domain.local/redirect_uri"
-OIDCCryptoPassphrase="randomly_generated_secure_passphrase"
-OIDCClientID="webdav-client"
-OIDCClientSecret="ABC123def456GHI789jkl0mnopqrs"
-OIDCProviderTokenEndpointAuth="client_secret_basic"
-OIDCRemoteUserClaim="preferred_username"
-OIDCScope="openid email profile"
-OIDCXForwardedHeaders="X-Forwarded-Host"
-```
+### 🏢 LDAP
 
-> More examples with different identity providers can be found on the [mod_auth_openidc](https://github.com/OpenIDC/mod_auth_openidc) GitHub page.
-
-
-### 🔐 LDAP Authentication
-LDAP integration for centralized user management:
-```
+```env
 LDAP_ENABLED=true
 LDAP_URL=ldaps://ldap.example.com
 LDAP_ATTRIBUTE=uid
 LDAP_BASE_DN=ou=users,dc=example,dc=com
-LDAP_BIND_DN=uid=admin,ou=users,dc=example,dc=com
+LDAP_BIND_DN=uid=searchuser,ou=users,dc=example,dc=com
 LDAP_BIND_PASSWORD=securepassword
 ```
 
-## 📖 Usage Guide
+### ↩️ LDAP + Basic fallback
 
-1. Clone Repository
+Set both flags to `true`. Apache tries LDAP first, falls back to the local user file if LDAP authentication fails.
 
-2. Start the WebDAV Server: `docker compose up --build`
+```env
+LDAP_ENABLED=true
+BASIC_AUTH_ENABLED=true
+```
 
-3. Open http://localhost or your server's IP in a browser or WebDAV client to start using the service.
+### 🌐 OAuth / OpenID Connect
 
+```env
+OAUTH_ENABLED=true
+OIDCProviderMetadataURL="http://keycloak/.well-known/openid-configuration"
+OIDCRedirectURI="http://my-domain.local/redirect_uri"
+OIDCCryptoPassphrase="passphrase"
+OIDCClientID="webdav-client"
+OIDCClientSecret="secret"
+OIDCRemoteUserClaim="preferred_username"
+OIDCScope="openid email profile"
+```
 
-## 📑 WebDAV Methods and Access Control
+> More provider examples: [mod_auth_openidc](https://github.com/OpenIDC/mod_auth_openidc)
 
-You can set the allowed WebDAV/HTTP methods via the `WEBDAV_OPERATIONS` environment variable in your `.env` file. This will dynamically control which methods are permitted by the server at runtime.
+## 🛠️ Method Control
 
-| Method      | Purpose                                                      |
-|-------------|--------------------------------------------------------------|
-| GET         | Download a file or resource                                  |
-| OPTIONS     | Discover server-supported methods                            |
-| PROPFIND    | List directory contents, get resource metadata               |
-| PUT         | Upload a file                                                |
-| DELETE      | Delete a file or resource                                    |
-| MKCOL       | Create a new collection (folder)                             |
-| COPY        | Copy a resource                                              |
-| MOVE        | Move or rename a resource                                    |
-| LOCK        | Lock a resource                                              |
-| UNLOCK      | Unlock a resource                                            |
-| PROPPATCH   | Set or remove resource properties                            |
-| REPORT      | Query for information (advanced WebDAV clients)              |
-| PATCH       | Partial update of a resource                                 |
-| HEAD        | Retrieve headers only (no body)                              |
-| POST        | Submit data (rarely used in WebDAV, sometimes for locking)   |
+```env
+RO_METHODS="GET HEAD OPTIONS PROPFIND"
+RW_METHODS="GET HEAD OPTIONS PROPFIND PUT DELETE MKCOL COPY MOVE LOCK UNLOCK PROPPATCH"
+```
+
+Override either variable to customise which HTTP methods are allowed per access mode.
+
+See [WebDAV Methods Reference](docs/webdav-methods.md) for the full list of supported methods.
+
+## 🧩 Optional Features
+
+```env
+# Configurable server hostname
+SERVER_NAME=localhost
+
+# CORS headers
+CORS_ENABLED=false
+CORS_ORIGIN=*
+
+# Health check: GET /_health → 200 OK
+HEALTH_CHECK_ENABLED=false
+```
+
+## 🔒 Security Testing
+
+```bash
+./tests/run-all.sh
+```
+
+See [Security Tests](docs/tests.md) for all scenarios and options.
 
 ## 📚 References
 
-- [Docker Apache WebDAV](https://github.com/mgutt/docker-apachewebdav)
+- [Use Cases](docs/use-cases.md)
+- [Deployment Examples](docs/examples.md)
+- [WebDAV Methods Reference](docs/webdav-methods.md)
+- [Security Tests](docs/tests.md)
+- [mod_auth_openidc](https://github.com/OpenIDC/mod_auth_openidc)
 - [What is WebDAV?](https://www.jscape.com/blog/what-is-webdav)

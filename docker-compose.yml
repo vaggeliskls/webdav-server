@@ -1,12 +1,9 @@
-version: "3.8"
-
 services:
   webdav:
     image: ghcr.io/vaggeliskls/webdav-server:latest
     build:
       context: .
       dockerfile: Dockerfile
-    platform: linux/amd64
     volumes:
       - ./webdav-data:/var/lib/dav/data
     networks:
@@ -31,7 +28,7 @@ services:
       - "traefik.http.middlewares.ratelimit.ratelimit.sourcecriterion.ipstrategy.depth=1"
 
   webdav-proxy:
-    image: traefik:v3.1
+    image: traefik:v3.6.9
     platform: linux/amd64
     command:
       - "--providers.docker=true"

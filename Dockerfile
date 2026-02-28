@@ -15,12 +15,11 @@ RUN groupadd -r webuser && useradd -r -g webuser webuser
 # Create necessary directories and adjust ownership
 RUN mkdir -p "/var/www/html" && \
     mkdir -p "/var/lib/dav/data" && \
-    touch "/var/lib/dav/DavLock" && \
     chown -R webuser:webuser "/var/www/html" "/var/lib/dav" "/usr/local/apache2"
 
 # Uncomment necessary LoadModule lines in httpd.conf
 RUN for i in \
-    authn_core authn_file authz_core authz_user auth_digest \
+    authn_core authn_file authz_core authz_user \
     ldap authnz_ldap ssl auth_basic \
     alias headers mime setenvif \
     dav dav_fs; \
@@ -36,8 +35,10 @@ COPY ./webdav.conf /usr/local/apache2/conf/webdav.conf.template
 COPY ./virtualhost.conf /usr/local/apache2/conf/virtualhost.conf.template
 
 # Change ports in the Apache configuration to higher ports
+# Suppress the "could not determine FQDN" startup warning
 RUN sed -i 's/Listen 80/Listen 8080/' /usr/local/apache2/conf/httpd.conf && \
-    sed -i 's/Listen 443/Listen 8443/' /usr/local/apache2/conf/httpd.conf
+    sed -i 's/Listen 443/Listen 8443/' /usr/local/apache2/conf/httpd.conf && \
+    echo "ServerName localhost" >> /usr/local/apache2/conf/httpd.conf
 
 # Copy the entrypoint script into the container
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
