@@ -20,7 +20,7 @@ New scenario scripts are picked up automatically — no changes to `run-all.sh` 
 | [`tests/scenario-2-readonly.sh`](../tests/scenario-2-readonly.sh) | All folders read-only — writes blocked | — |
 | [`tests/scenario-3-user-isolation.sh`](../tests/scenario-3-user-isolation.sh) | Per-user folder isolation — cross-access denied | — |
 | [`tests/scenario-4-public-only.sh`](../tests/scenario-4-public-only.sh) | No auth — public readable, PUT blocked | — |
-| [`tests/scenario-5-ldap.sh`](../tests/scenario-5-ldap.sh) | LDAP authentication — valid/invalid credentials, per-user isolation | `bitnami/openldap` (pulled automatically) |
+| [`tests/scenario-5-ldap.sh`](../tests/scenario-5-ldap.sh) | LDAP authentication — valid/invalid credentials, per-user isolation | `osixia/openldap` (pulled automatically) |
 
 ```bash
 ./tests/scenario-5-ldap.sh            # build + test
