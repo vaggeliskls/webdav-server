@@ -39,15 +39,11 @@ EOF
 EOF
 
     elif [ "$OAUTH_ENABLED" = "true" ]; then
+        # Only AuthType goes inside the Directory block.
+        # OIDC global directives are injected into the VirtualHost by apply_oauth_config.
         cat >> "$file" << 'EOF'
-    LoadModule auth_openidc_module /usr/lib/apache2/modules/mod_auth_openidc.so
     AuthType openid-connect
 EOF
-        # Inject all OIDC_* env vars as Apache directives
-        for var in $(env | grep "^OIDC" | cut -d'=' -f1); do
-            var_value=$(eval echo \$$var)
-            echo "    ${var} \"${var_value}\"" >> "$file"
-        done
 
     else
         # Basic Auth (default)
@@ -248,6 +244,23 @@ generate_passwd_file() {
 }
 
 # ---------------------------------------------------------------------------
+# Inject OIDC global directives into the VirtualHost block.
+# These cannot appear inside <Directory> blocks — VirtualHost level only.
+# ---------------------------------------------------------------------------
+apply_oauth_config() {
+    if [ "$OAUTH_ENABLED" = "true" ]; then
+        echo "--> OAuth/OIDC enabled — injecting OIDC directives into VirtualHost"
+        local oidc_directives=""
+        for var in $(env | grep "^OIDC" | cut -d'=' -f1); do
+            var_value=$(eval echo \$$var)
+            oidc_directives="${oidc_directives}    ${var} \"${var_value}\"\n"
+        done
+        sed -i "s|</VirtualHost>|${oidc_directives}</VirtualHost>|" \
+            "${CONF_DIR}/virtualhost.conf"
+    fi
+}
+
+# ---------------------------------------------------------------------------
 # Apply CORS headers to virtualhost config if enabled.
 # ---------------------------------------------------------------------------
 apply_cors() {
@@ -292,8 +305,22 @@ elif [ -n "$FOLDER_PERMISSIONS" ] && [ "$LDAP_ENABLED" != "true" ] && [ "$OAUTH_
 fi
 
 # Apply optional features to virtualhost
+apply_oauth_config
 apply_cors
 apply_health_check
+
+# Load mod_auth_openidc globally when OAuth is enabled.
+# LoadModule must be at server level, not inside Directory blocks.
+if [ "$OAUTH_ENABLED" = "true" ]; then
+    MODULE_SRC="/usr/lib/apache2/modules/mod_auth_openidc.so"
+    MODULE_DST="${CONF_DIR}/../modules/mod_auth_openidc.so"
+    if [ -f "$MODULE_SRC" ] && [ ! -f "$MODULE_DST" ]; then
+        ln -s "$MODULE_SRC" "$MODULE_DST"
+    fi
+    if ! grep -q "auth_openidc_module" "${CONF_DIR}/httpd.conf"; then
+        echo "LoadModule auth_openidc_module modules/mod_auth_openidc.so" >> "${CONF_DIR}/httpd.conf"
+    fi
+fi
 
 # Include configs in main httpd.conf (append on each start — use a guard to prevent duplicates)
 if ! grep -q "Include conf/webdav.conf" "${CONF_DIR}/httpd.conf"; then
