@@ -57,16 +57,76 @@ EOF
 
 # ---------------------------------------------------------------------------
 # Write a Require line for a given users value and auth type.
-#   users: "*" → valid-user
-#   users: "alice bob" → Require user alice bob  (Basic)
-#                     → Require ldap-user alice bob  (LDAP)
-#                     → <RequireAny> Require claim ... (OAuth)
+#   users: "*"          → Require valid-user
+#   users: "alice bob"  → Require user alice bob  (Basic)
+#                       → Require ldap-user alice bob  (LDAP)
+#                       → <RequireAny> Require claim ... (OAuth)
+#   users: "* !charlie" → <RequireAll> valid-user + Require not user charlie
+#
+# Tokens prefixed with "!" are exclusions and generate "Require not" directives
+# wrapped in a <RequireAll> block alongside the allow directive.
 # ---------------------------------------------------------------------------
 write_require() {
     local file="$1"
     local users="$2"
     local indent="$3"
 
+    # Split tokens into allow_list and exclude_list (! prefix = exclude).
+    # Disable glob expansion so a bare "*" in $users is not expanded to filenames.
+    local allow_list=""
+    local exclude_list=""
+    set -f
+    for u in $users; do
+        case "$u" in
+            !*) exclude_list="${exclude_list} ${u#!}" ;;
+            *)  allow_list="${allow_list} ${u}" ;;
+        esac
+    done
+    set +f
+    allow_list="${allow_list# }"
+    exclude_list="${exclude_list# }"
+
+    if [ -n "$exclude_list" ]; then
+        # Use <RequireAll> + <RequireNone> for exclusions.
+        #
+        # "Require not user X" returns NEUTRAL for non-X users, which causes
+        # <RequireAll> to fail. <RequireNone> returns GRANTED when none of its
+        # inner directives match — the correct semantics for exclusion.
+        local claim="${OIDCRemoteUserClaim:-preferred_username}"
+        echo "${indent}<RequireAll>" >> "$file"
+
+        # Allow directive (empty allow_list or "*" both mean any valid user)
+        if [ -z "$allow_list" ] || [ "$allow_list" = "*" ]; then
+            echo "${indent}    Require valid-user" >> "$file"
+        elif [ "$LDAP_ENABLED" = "true" ]; then
+            echo "${indent}    Require ldap-user ${allow_list}" >> "$file"
+        elif [ "$OAUTH_ENABLED" = "true" ]; then
+            for u in $allow_list; do
+                echo "${indent}    Require claim ${claim}:${u}" >> "$file"
+            done
+        else
+            echo "${indent}    Require user ${allow_list}" >> "$file"
+        fi
+
+        # <RequireNone> returns GRANTED when none of its directives match,
+        # and DENIED when any matches — exactly the "exclude these users" logic.
+        echo "${indent}    <RequireNone>" >> "$file"
+        for u in $exclude_list; do
+            if [ "$LDAP_ENABLED" = "true" ]; then
+                echo "${indent}        Require ldap-user ${u}" >> "$file"
+            elif [ "$OAUTH_ENABLED" = "true" ]; then
+                echo "${indent}        Require claim ${claim}:${u}" >> "$file"
+            else
+                echo "${indent}        Require user ${u}" >> "$file"
+            fi
+        done
+        echo "${indent}    </RequireNone>" >> "$file"
+
+        echo "${indent}</RequireAll>" >> "$file"
+        return
+    fi
+
+    # No exclusions — original behaviour
     if [ "$users" = "*" ]; then
         echo "${indent}Require valid-user" >> "$file"
         return
@@ -118,6 +178,9 @@ EOF
 EOF
     else
         write_auth_directives "$FOLDERS_CONF"
+        # Return 403 (not 401) when a valid user is denied by authorization,
+        # so excluded users get a clear Forbidden rather than a re-auth challenge.
+        echo "    AuthzSendForbiddenOnFailure On" >> "$FOLDERS_CONF"
         cat >> "$FOLDERS_CONF" << EOF
     <Limit ${methods}>
 EOF

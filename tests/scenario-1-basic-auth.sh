@@ -68,3 +68,58 @@ if [ "$EXIT_CODE" -ne 0 ]; then
     dump_logs
     exit "$EXIT_CODE"
 fi
+
+# ---------------------------------------------------------------------------
+# User exclusion tests
+# Dedicated container with "* !charlie" on /shared.
+# alice and bob are allowed; charlie is authenticated but excluded (403).
+# ---------------------------------------------------------------------------
+EXCL_CONTAINER="webdav-scenario-1-excl"
+docker rm -f "$CONTAINER" "$EXCL_CONTAINER" >/dev/null 2>&1 || true
+
+docker run -d --name "$EXCL_CONTAINER" \
+    -p "${PORT}:8080" \
+    -e SERVER_NAME=localhost \
+    -e "FOLDER_PERMISSIONS=/shared:* !charlie:ro" \
+    -e AUTO_CREATE_FOLDERS=true \
+    -e BASIC_AUTH_ENABLED=true \
+    -e BASIC_USERS="alice:alice123 bob:bob123 charlie:charlie123" \
+    -e HEALTH_CHECK_ENABLED=true \
+    "$IMAGE"
+
+CONTAINER_NAME="$EXCL_CONTAINER"
+trap 'teardown_container' EXIT INT TERM
+wait_for_server "${BASE_URL}/_health"
+
+print_header "User exclusion — * !charlie on /shared"
+
+assert_status_in \
+    "alice (not excluded) can GET /shared/" \
+    "200 207" \
+    -u alice:alice123 \
+    "${BASE_URL}/shared/"
+
+assert_status_in \
+    "bob (not excluded) can GET /shared/" \
+    "200 207" \
+    -u bob:bob123 \
+    "${BASE_URL}/shared/"
+
+assert_status_in \
+    "charlie (excluded, valid credentials) is forbidden /shared/" \
+    "403" \
+    -u charlie:charlie123 \
+    "${BASE_URL}/shared/"
+
+assert_status_in \
+    "unauthenticated request is unauthorised /shared/" \
+    "401" \
+    "${BASE_URL}/shared/"
+
+# ---------------------------------------------------------------------------
+print_summary
+
+if [ "$FAIL" -gt 0 ]; then
+    dump_logs
+    exit 1
+fi

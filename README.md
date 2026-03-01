@@ -13,7 +13,7 @@ A lightweight, Docker-based WebDAV server built on Apache httpd with flexible pe
 
 - 🗂️ **Per-folder access control** — different folders can have different auth rules and user restrictions
 - 🌍 **Public folders** — mix unauthenticated and authenticated folders on the same server
-- 👤 **Per-user permissions** — restrict specific folders to specific users
+- 👤 **Per-user permissions** — include or exclude specific users per folder
 - 🔐 **Multiple auth methods** — Basic, LDAP, OAuth/OIDC (or LDAP + Basic combined)
 - ⚙️ **Configurable methods** — control read-only vs read-write access per folder
 - 🌐 **CORS support** — configurable for web clients
@@ -36,9 +36,22 @@ The main configuration point. Controls which folders exist, who can access them,
 
 ```env
 # Format: "/path:users:mode" comma-separated
-# users: public | * | alice bob (space-separated)
+# users: public        — no authentication required
+#        *             — any authenticated user
+#        alice bob     — specific users (space-separated)
+#        * !charlie    — any authenticated user except charlie
 # mode:  ro (uses RO_METHODS) | rw (uses RW_METHODS)
 FOLDER_PERMISSIONS="/public:public:ro,/shared:*:ro,/private:alice bob:rw,/admin:admin:rw"
+```
+
+Prefix a username with `!` to exclude that user from an otherwise open folder:
+
+```env
+# All authenticated users can read /shared except charlie
+FOLDER_PERMISSIONS="/shared:* !charlie:ro"
+
+# Exclude multiple users
+FOLDER_PERMISSIONS="/shared:* !charlie !dave:rw"
 ```
 
 Folders are auto-created at startup (`AUTO_CREATE_FOLDERS=true`).
