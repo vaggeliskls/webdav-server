@@ -108,7 +108,34 @@ services:
 
 ---
 
-## 5. 🏢 LDAP authentication
+## 5. 🚫 Exclude specific users from a folder
+
+Allow all authenticated users to access a folder except one or more explicitly blocked users.
+
+```yaml
+# docker-compose.yml
+services:
+  webdav:
+    image: ghcr.io/vaggeliskls/webdav-server:latest
+    ports:
+      - "80:8080"
+    volumes:
+      - ./data:/var/lib/dav/data
+    environment:
+      SERVER_NAME: localhost
+      FOLDER_PERMISSIONS: "/shared:* !charlie:ro,/private:alice bob:rw"
+      AUTO_CREATE_FOLDERS: "true"
+      BASIC_AUTH_ENABLED: "true"
+      BASIC_USERS: "alice:alice123 bob:bob123 charlie:charlie123"
+```
+
+- `GET http://localhost/shared/` with `alice` or `bob` → allowed
+- `GET http://localhost/shared/` with `charlie` → `403 Forbidden`
+- Multiple exclusions: `"* !charlie !dave"`
+
+---
+
+## 6. 🏢 LDAP authentication
 
 Authenticate users against an LDAP/Active Directory server. All authenticated users can access `/files`.
 
@@ -135,7 +162,7 @@ services:
 
 ---
 
-## 6. 🔀 LDAP with Basic Auth fallback
+## 7. 🔀 LDAP with Basic Auth fallback
 
 Apache tries LDAP first. If LDAP is unreachable or the user is not found, it falls back to the local password file.
 
@@ -164,7 +191,7 @@ services:
 
 ---
 
-## 7. 🔁 Behind Traefik reverse proxy
+## 8. 🔁 Behind Traefik reverse proxy
 
 Expose the server via Traefik with rate limiting. The `webdav` container is not directly port-exposed.
 
@@ -209,7 +236,7 @@ networks:
 
 ---
 
-## 8. 🧩 With CORS and health check
+## 9. 🧩 With CORS and health check
 
 Enable CORS for web clients and expose a health check endpoint for uptime monitoring.
 

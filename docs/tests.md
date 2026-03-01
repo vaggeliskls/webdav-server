@@ -16,7 +16,7 @@ New scenario scripts are picked up automatically — no changes to `run-all.sh` 
 
 | Script | What it tests | Extra dependencies |
 |--------|--------------|-------------------|
-| [`tests/scenario-1-basic-auth.sh`](../tests/scenario-1-basic-auth.sh) | Public + Basic Auth private folder — full suite | — |
+| [`tests/scenario-1-basic-auth.sh`](../tests/scenario-1-basic-auth.sh) | Public + Basic Auth private folder — full suite + user exclusion | — |
 | [`tests/scenario-2-readonly.sh`](../tests/scenario-2-readonly.sh) | All folders read-only — writes blocked | — |
 | [`tests/scenario-3-user-isolation.sh`](../tests/scenario-3-user-isolation.sh) | Per-user folder isolation — cross-access denied | — |
 | [`tests/scenario-4-public-only.sh`](../tests/scenario-4-public-only.sh) | No auth — public readable, PUT blocked | — |
@@ -28,6 +28,74 @@ New scenario scripts are picked up automatically — no changes to `run-all.sh` 
 ```
 
 Each script manages its own container lifecycle: it starts the container(s), waits for the health endpoint, runs the assertions, and cleans up on exit (even on failure). Scenario 5 also creates and removes a dedicated Docker network for LDAP communication.
+
+### Scenario 1 — Basic Auth: public + private
+
+**Config:** `/public:public:ro,/private:alice bob:rw,/shared:*:ro`
+
+Runs the full [`test-security.sh`](../tests/test-security.sh) suite. Then spins up a dedicated container with `/shared:* !charlie:ro` to verify user exclusion in isolation:
+
+| Assertion | Expected |
+|-----------|----------|
+| `alice` (not excluded) `GET /shared/` | `200` or `207` |
+| `bob` (not excluded) `GET /shared/` | `200` or `207` |
+| `charlie` (excluded, valid credentials) `GET /shared/` | `403` |
+| Unauthenticated `GET /shared/` | `401` |
+
+> The exclusion container is separate so charlie's credentials don't interfere with the main security suite. `403` (forbidden) distinguishes an authenticated-but-excluded user from `401` (unauthenticated).
+
+### Scenario 2 — Read-only folders
+
+**Config:** `/public:public:ro,/private:*:ro`
+
+Verifies that `ro` mode blocks all write methods even for authenticated users.
+
+| Assertion | Expected |
+|-----------|----------|
+| Unauthenticated request to `/private/` | `401` or `403` |
+| Authenticated `GET /private/` | `200` or `207` |
+| Authenticated `PUT /private/test.txt` | `403` or `405` |
+
+### Scenario 3 — Per-user folder isolation
+
+**Config:** `/alice:alice:rw,/bob:bob:rw,/shared:*:ro`
+
+Verifies that users can only access their own folders and cannot reach other users' folders.
+
+| Assertion | Expected |
+|-----------|----------|
+| `alice GET /alice/` | `200` or `207` |
+| `bob GET /alice/` | `403` or `401` |
+| `alice GET /bob/` | `403` or `401` |
+| `alice GET /shared/` | `200` or `207` |
+| `bob GET /shared/` | `200` or `207` |
+
+### Scenario 4 — Public server (no auth)
+
+**Config:** `/files:public:ro`
+
+Verifies that public folders work without credentials and that write methods are still blocked by `ro` mode.
+
+| Assertion | Expected |
+|-----------|----------|
+| `GET /files/` (no credentials) | `200` or `207` |
+| `PUT /files/inject.txt` (no credentials) | `403` or `405` |
+
+### Scenario 5 — LDAP authentication
+
+**Config:** `/public:public:ro,/private:alice bob:rw,/alice:alice:rw,/bob:bob:rw`
+
+Spins up an `osixia/openldap` container alongside WebDAV on a shared Docker network, seeds two test users (`alice`, `bob`), then verifies LDAP credential validation and per-user isolation.
+
+| Assertion | Expected |
+|-----------|----------|
+| No credentials on `/private/` | `401` or `403` |
+| Wrong LDAP password | `401` or `403` |
+| Non-existent LDAP user | `401` or `403` |
+| `alice` with correct LDAP password — `GET /private/` | `200` or `207` |
+| `alice` `PUT` to `/private/` | `201` or `204` |
+| `bob GET /alice/` | `401` or `403` |
+| `alice GET /bob/` | `401` or `403` |
 
 ## Full security suite
 
@@ -48,6 +116,20 @@ Covers:
 - User isolation (cross-folder access denied)
 - Security headers (`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`)
 - Health check endpoint
+
+## Permission model
+
+Access control uses an **allowlist with optional exclusions**. The `users` field in `FOLDER_PERMISSIONS` controls who can access a folder:
+
+| Value | Meaning |
+|-------|---------|
+| `public` | No authentication required |
+| `*` | Any authenticated user |
+| `alice bob` | Only the named users (space-separated) |
+| `* !charlie` | Any authenticated user except `charlie` |
+| `* !charlie !dave` | Any authenticated user except `charlie` and `dave` |
+
+Prefix a username with `!` to exclude that specific user. Exclusions are only meaningful alongside `*` (all users). Under the hood, exclusions generate a `<RequireAll>` block with `Require valid-user` and one `Require not user <name>` per excluded user.
 
 ## Environment variables
 
