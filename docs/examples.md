@@ -95,40 +95,37 @@ curl -u alice:alice123 --anyauth http://localhost/files/
 
 ---
 
-## 4. 🔄 Basic + Digest (dual auth support)
+## 4. 🔄 Basic vs Digest — choosing one
 
-Support both Basic and Digest authentication. Digest is used as primary, with Basic as fallback for clients that don't support Digest.
+Apache's file-based Basic and Digest auth use incompatible password file formats and cannot run simultaneously on the same resource. You must enable one or the other.
+
+**Use Basic** (recommended when behind HTTPS — simpler, universally supported):
 
 ```yaml
-# docker-compose.yml
-services:
-  webdav:
-    image: ghcr.io/vaggeliskls/webdav-server:latest
-    ports:
-      - "80:8080"
-    volumes:
-      - ./data:/var/lib/dav/data
-    environment:
-      SERVER_NAME: localhost
-      FOLDER_PERMISSIONS: "/files:*:rw"
-      AUTO_CREATE_FOLDERS: "true"
-      BASIC_AUTH_ENABLED: "true"
-      DIGEST_AUTH_ENABLED: "true"
-      BASIC_USERS: "alice:alice123 bob:bob123"
+environment:
+  BASIC_AUTH_ENABLED: "true"
+  DIGEST_AUTH_ENABLED: "false"
+  BASIC_USERS: "alice:alice123 bob:bob123"
 ```
-
-Clients can use either method:
 
 ```bash
-# Use Basic auth (curl's default)
 curl -u alice:alice123 http://localhost/files/
-
-# Use Digest auth (more secure)
-curl -u alice:alice123 --digest http://localhost/files/
-
-# Let curl auto-negotiate (prefers Digest)
-curl -u alice:alice123 --anyauth http://localhost/files/
 ```
+
+**Use Digest** (credentials never sent in plaintext — useful without HTTPS):
+
+```yaml
+environment:
+  BASIC_AUTH_ENABLED: "false"
+  DIGEST_AUTH_ENABLED: "true"
+  BASIC_USERS: "alice:alice123 bob:bob123"
+```
+
+```bash
+curl --digest -u alice:alice123 http://localhost/files/
+```
+
+> **Note:** If both `BASIC_AUTH_ENABLED` and `DIGEST_AUTH_ENABLED` are set to `true`, Basic takes precedence.
 
 ---
 

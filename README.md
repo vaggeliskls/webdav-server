@@ -15,7 +15,7 @@ A lightweight, Docker-based WebDAV server built on Apache httpd with flexible pe
 - 🗂️ **Per-folder access control** — different folders can have different auth rules and user restrictions
 - 🌍 **Public folders** — mix unauthenticated and authenticated folders on the same server
 - 👤 **Per-user permissions** — include or exclude specific users per folder
-- 🔐 **Multiple auth methods** — Basic, LDAP, OAuth/OIDC (or LDAP + Basic combined)
+- 🔐 **Multiple auth methods** — Basic, Digest, LDAP, OAuth/OIDC (or LDAP + Basic combined)
 - ⚙️ **Configurable methods** — control read-only vs read-write access per folder
 - 🌐 **CORS support** — configurable for web clients
 - ❤️ **Health check endpoint** — optional `/_health` route
@@ -75,19 +75,12 @@ BASIC_USERS="alice:alice123 bob:bob123"
 For enhanced security, enable Digest authentication (passwords never sent in plain text):
 
 ```env
+BASIC_AUTH_ENABLED=false
 DIGEST_AUTH_ENABLED=true
 BASIC_USERS="alice:alice123 bob:bob123"
 ```
 
-### 🔄 Both Basic + Digest
-
-Support both methods (Digest as primary, Basic as fallback):
-
-```env
-BASIC_AUTH_ENABLED=true
-DIGEST_AUTH_ENABLED=true
-BASIC_USERS="alice:alice123 bob:bob123"
-```
+> **Note:** Basic and Digest are mutually exclusive. Apache's file-based providers use incompatible password formats and cannot run simultaneously. If both are set to `true`, Basic takes precedence.
 
 ### 🏢 LDAP
 
