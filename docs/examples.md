@@ -47,13 +47,93 @@ services:
 Access the server:
 
 ```bash
-# Mount or browse with credentials
+# Basic authentication (curl's default)
 curl -u alice:alice123 http://localhost/files/
+
+# Upload a file
+curl -u alice:alice123 -T myfile.txt http://localhost/files/myfile.txt
+
+# Create a directory
+curl -u alice:alice123 -X MKCOL http://localhost/files/newfolder/
 ```
 
 ---
 
-## 3. 🗂️ Mixed public + private folders
+## 3. � Digest Auth — enhanced security
+
+Use Digest authentication for improved security. Passwords are never sent in plain text over the network.
+
+```yaml
+# docker-compose.yml
+services:
+  webdav:
+    image: ghcr.io/vaggeliskls/webdav-server:latest
+    ports:
+      - "80:8080"
+    volumes:
+      - ./data:/var/lib/dav/data
+    environment:
+      SERVER_NAME: localhost
+      FOLDER_PERMISSIONS: "/files:*:rw"
+      AUTO_CREATE_FOLDERS: "true"
+      BASIC_AUTH_ENABLED: "false"
+      BASIC_USERS: "alice:alice123 bob:bob123"
+      AUTH_TYPE: "digest"
+```
+
+Access the server with Digest authentication:
+
+```bash
+# Force Digest authentication
+curl -u alice:alice123 --digest http://localhost/files/
+
+# Upload a file
+curl -u alice:alice123 --digest -T myfile.txt http://localhost/files/myfile.txt
+
+# Auto-negotiate (curl will choose Digest automatically)
+curl -u alice:alice123 --anyauth http://localhost/files/
+```
+
+---
+
+## 4. 🔄 Basic + Digest (dual auth support)
+
+Support both Basic and Digest authentication, letting clients choose their preferred method.
+
+```yaml
+# docker-compose.yml
+services:
+  webdav:
+    image: ghcr.io/vaggeliskls/webdav-server:latest
+    ports:
+      - "80:8080"
+    volumes:
+      - ./data:/var/lib/dav/data
+    environment:
+      SERVER_NAME: localhost
+      FOLDER_PERMISSIONS: "/files:*:rw"
+      AUTO_CREATE_FOLDERS: "true"
+      BASIC_AUTH_ENABLED: "true"
+      BASIC_USERS: "alice:alice123 bob:bob123"
+      AUTH_TYPE: "both"
+```
+
+Clients can use either method:
+
+```bash
+# Use Basic auth (curl's default)
+curl -u alice:alice123 http://localhost/files/
+
+# Use Digest auth (more secure)
+curl -u alice:alice123 --digest http://localhost/files/
+
+# Let curl auto-negotiate (prefers Digest)
+curl -u alice:alice123 --anyauth http://localhost/files/
+```
+
+---
+
+## 5. �🗂️ Mixed public + private folders
 
 A public read-only area alongside a private read-write folder restricted to specific users.
 
@@ -209,8 +289,7 @@ services:
       FOLDER_PERMISSIONS: "/files:*:rw"
       AUTO_CREATE_FOLDERS: "true"
       BASIC_AUTH_ENABLED: "true"
-      BASIC_USERS: "alice:alice123"
-    labels:
+      BASIC_USERS: "alice:alice123"      AUTH_TYPE: "basic"    labels:
       - "traefik.enable=true"
       - "traefik.http.routers.webdav.rule=Host(`files.mydomain.com`)"
       - "traefik.http.routers.webdav.entrypoints=web"
@@ -236,7 +315,7 @@ networks:
 
 ---
 
-## 9. 🧩 With CORS and health check
+## 11. 🧩 With CORS and health check
 
 Enable CORS for web clients and expose a health check endpoint for uptime monitoring.
 
@@ -255,6 +334,7 @@ services:
       AUTO_CREATE_FOLDERS: "true"
       BASIC_AUTH_ENABLED: "true"
       BASIC_USERS: "alice:alice123"
+      AUTH_TYPE: "basic"
       CORS_ENABLED: "true"
       CORS_ORIGIN: "https://myapp.example.com"
       HEALTH_CHECK_ENABLED: "true"

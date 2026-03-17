@@ -20,7 +20,7 @@ RUN mkdir -p "/var/www/html" && \
 # Uncomment necessary LoadModule lines in httpd.conf
 RUN for i in \
     authn_core authn_file authz_core authz_user \
-    ldap authnz_ldap ssl auth_basic \
+    ldap authnz_ldap ssl auth_basic auth_digest \
     alias headers mime setenvif \
     dav dav_fs; \
     do \

@@ -10,7 +10,7 @@ RW_METHODS="${RW_METHODS:-GET HEAD OPTIONS PROPFIND PUT DELETE MKCOL COPY MOVE L
 
 # ---------------------------------------------------------------------------
 # Write the auth directives block for a protected directory.
-# Depends on the active auth method (LDAP / OAuth / Basic).
+# Depends on the active auth method (LDAP / OAuth / Basic / Digest).
 # ---------------------------------------------------------------------------
 write_auth_directives() {
     local file="$1"
@@ -44,6 +44,27 @@ EOF
         cat >> "$file" << 'EOF'
     AuthType openid-connect
 EOF
+
+    elif [ "$DIGEST_AUTH_ENABLED" = "true" ]; then
+        # Digest Auth (with or without Basic fallback)
+        echo "--> Digest auth enabled"
+        local realm="${DIGEST_REALM:-WebDAV}"
+        cat >> "$file" << EOF
+    AuthType Digest
+    AuthName "${realm}"
+    AuthDigestProvider file
+    AuthUserFile "${DAV_DIR}/user.digest"
+EOF
+        if [ "$BASIC_AUTH_ENABLED" = "true" ]; then
+            echo "--> Basic auth also enabled as fallback"
+            cat >> "$file" << EOF
+    # Also configure Basic auth as fallback for clients that don't support Digest
+    <IfModule mod_auth_basic.c>
+        AuthBasicProvider file
+        AuthUserFile "${DAV_DIR}/user.passwd"
+    </IfModule>
+EOF
+        fi
 
     else
         # Basic Auth (default)
@@ -307,6 +328,22 @@ generate_passwd_file() {
 }
 
 # ---------------------------------------------------------------------------
+# Build the Digest Auth password file using htdigest (MD5).
+# ---------------------------------------------------------------------------
+generate_digest_file() {
+    local realm="${DIGEST_REALM:-WebDAV}"
+    rm -f "${DAV_DIR}/user.digest"
+    touch "${DAV_DIR}/user.digest"
+    echo "$BASIC_USERS" | tr ' ' '\n' | while IFS=':' read -r USERNAME PASSWORD; do
+        [ -z "$USERNAME" ] && continue
+        # htdigest expects: htdigest [-c] passwordfile realm username
+        # We use echo to pipe the password to htdigest
+        printf "%s\n" "$PASSWORD" | htdigest "${DAV_DIR}/user.digest" "$realm" "$USERNAME" > /dev/null
+        echo "--> Added user to digest file: ${USERNAME}"
+    done
+}
+
+# ---------------------------------------------------------------------------
 # Inject OIDC global directives into the VirtualHost block.
 # These cannot appear inside <Directory> blocks — VirtualHost level only.
 # ---------------------------------------------------------------------------
@@ -376,6 +413,11 @@ elif [ -n "$FOLDER_PERMISSIONS" ] && [ "$BASIC_AUTH_ENABLED" = "true" ]; then
 elif [ -n "$FOLDER_PERMISSIONS" ] && [ "$LDAP_ENABLED" != "true" ] && [ "$OAUTH_ENABLED" != "true" ]; then
     # FOLDER_PERMISSIONS set but no explicit auth — generate passwd for any non-public folders
     generate_passwd_file
+fi
+
+# Set up Digest Auth password file if needed
+if [ "$DIGEST_AUTH_ENABLED" = "true" ]; then
+    generate_digest_file
 fi
 
 # Apply optional features to virtualhost
