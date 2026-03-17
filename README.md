@@ -63,11 +63,12 @@ Leave `FOLDER_PERMISSIONS` empty to fall back to single-root mode (all paths, on
 
 Set auth method via environment variables. Authentication applies to all non-public folders.
 
-### 🔑 Basic Auth (bcrypt)
+### 🔑 Basic / Digest Auth
 
 ```env
 BASIC_AUTH_ENABLED=true
 BASIC_USERS="alice:alice123 bob:bob123"
+AUTH_TYPE=basic  # or "digest" or "both"
 ```
 
 ### 🏢 LDAP
