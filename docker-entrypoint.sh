@@ -45,8 +45,8 @@ EOF
     AuthType openid-connect
 EOF
 
-    elif [ "$DIGEST_AUTH_ENABLED" = "true" ]; then
-        # Digest Auth (with or without Basic fallback)
+    elif [ "$DIGEST_AUTH_ENABLED" = "true" ] && [ "$BASIC_AUTH_ENABLED" != "true" ]; then
+        # Digest Auth only (Basic must be explicitly disabled)
         echo "--> Digest auth enabled"
         local realm="${DIGEST_REALM:-WebDAV}"
         cat >> "$file" << EOF
@@ -55,16 +55,6 @@ EOF
     AuthDigestProvider file
     AuthUserFile "${DAV_DIR}/user.digest"
 EOF
-        if [ "$BASIC_AUTH_ENABLED" = "true" ]; then
-            echo "--> Basic auth also enabled as fallback"
-            cat >> "$file" << EOF
-    # Also configure Basic auth as fallback for clients that don't support Digest
-    <IfModule mod_auth_basic.c>
-        AuthBasicProvider file
-        AuthUserFile "${DAV_DIR}/user.passwd"
-    </IfModule>
-EOF
-        fi
 
     else
         # Basic Auth (default)
@@ -338,7 +328,7 @@ generate_digest_file() {
         [ -z "$USERNAME" ] && continue
         # htdigest expects: htdigest [-c] passwordfile realm username
         # We use echo to pipe the password to htdigest
-        printf "%s\n" "$PASSWORD" | htdigest "${DAV_DIR}/user.digest" "$realm" "$USERNAME" > /dev/null
+        printf "%s\n%s\n" "$PASSWORD" "$PASSWORD" | htdigest "${DAV_DIR}/user.digest" "$realm" "$USERNAME" > /dev/null
         echo "--> Added user to digest file: ${USERNAME}"
     done
 }
