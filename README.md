@@ -63,12 +63,30 @@ Leave `FOLDER_PERMISSIONS` empty to fall back to single-root mode (all paths, on
 
 Set auth method via environment variables. Authentication applies to all non-public folders.
 
-### 🔑 Basic / Digest Auth
+### 🔑 Basic Auth
 
 ```env
 BASIC_AUTH_ENABLED=true
 BASIC_USERS="alice:alice123 bob:bob123"
-AUTH_TYPE=basic  # or "digest" or "both"
+```
+
+### 🔐 Digest Auth
+
+For enhanced security, enable Digest authentication (passwords never sent in plain text):
+
+```env
+DIGEST_AUTH_ENABLED=true
+BASIC_USERS="alice:alice123 bob:bob123"
+```
+
+### 🔄 Both Basic + Digest
+
+Support both methods (Digest as primary, Basic as fallback):
+
+```env
+BASIC_AUTH_ENABLED=true
+DIGEST_AUTH_ENABLED=true
+BASIC_USERS="alice:alice123 bob:bob123"
 ```
 
 ### 🏢 LDAP
