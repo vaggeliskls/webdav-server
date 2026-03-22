@@ -334,6 +334,12 @@ services:
       CORS_ENABLED: "true"
       CORS_ORIGIN: "https://myapp.example.com"
       HEALTH_CHECK_ENABLED: "true"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/_health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 ```
 
 ```bash
