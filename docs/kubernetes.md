@@ -6,7 +6,7 @@ Deploy the WebDAV server on Kubernetes using the Helm chart.
 
 ```bash
 # From OCI registry (GitHub Packages)
-helm install webdav oci://ghcr.io/vaggeliskls/webdav-server \
+helm install webdav oci://ghcr.io/vaggeliskls/webdav-server-chart \
   --version 1.0.0 \
   -n webdav --create-namespace
 
@@ -20,7 +20,7 @@ helm install webdav ./kubernetes \
 ## 1. 🌍 Public read-only server (no auth)
 
 ```bash
-helm install webdav oci://ghcr.io/vaggeliskls/webdav-server \
+helm install webdav oci://ghcr.io/vaggeliskls/webdav-server-chart \
   -n webdav --create-namespace \
   --set folderPermissions="/files:public:ro" \
   --set autoCreateFolders=true \
@@ -43,7 +43,7 @@ ingress:
 ```
 
 ```bash
-helm install webdav oci://ghcr.io/vaggeliskls/webdav-server \
+helm install webdav oci://ghcr.io/vaggeliskls/webdav-server-chart \
   -n webdav --create-namespace \
   -f values-public.yaml
 ```
@@ -65,7 +65,7 @@ ingress:
 ```
 
 ```bash
-helm install webdav oci://ghcr.io/vaggeliskls/webdav-server \
+helm install webdav oci://ghcr.io/vaggeliskls/webdav-server-chart \
   -n webdav --create-namespace \
   -f values-basic-auth.yaml
 ```
@@ -196,7 +196,7 @@ ingress:
 ## Upgrading
 
 ```bash
-helm upgrade webdav oci://ghcr.io/vaggeliskls/webdav-server \
+helm upgrade webdav oci://ghcr.io/vaggeliskls/webdav-server-chart \
   --version 1.1.0 \
   -n webdav \
   -f my-values.yaml

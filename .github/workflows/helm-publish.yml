@@ -32,7 +32,7 @@ jobs:
           dry_run: false # computes next version without creating a git tag
           tag_prefix: helm-chart-v # scopes tags to the helm chart independently of docker releases
           default_bump: patch # fallback bump type when no conventional commit keyword found
-          initial_version: 0.1.0
+          initial_version: 1.0.0
 
       - name: Install Helm
         uses: azure/setup-helm@v4
@@ -52,4 +52,4 @@ jobs:
       - name: Push Helm chart to GHCR
         run: |
           helm push webdav-server-${{ steps.version.outputs.new_version }}.tgz \
-            oci://${{ env.REGISTRY }}/${{ github.repository_owner }}
+            oci://${{ env.REGISTRY }}/${{ github.repository_owner }}/webdav-server-chart
