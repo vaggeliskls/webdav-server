@@ -37,7 +37,7 @@ ldap:
   attribute: "uid"
   baseDN: "ou=users,dc=example,dc=com"
   bindDN: "uid=searchuser,ou=users,dc=example,dc=com"
-  bindPassword: "securepassword"  # stored in Secret
+  bindPassword: "securepassword" # stored in Secret
 
 # ---------------------------------------------------------------------------
 # OAuth / OpenID Connect Authentication
@@ -47,8 +47,8 @@ oauth:
   providerMetadataURL: "http://keycloak/keycloak-auth/realms/master/.well-known/openid-configuration"
   redirectURI: "http://my-domain.local/redirect_uri"
   clientID: "webdav-client"
-  clientSecret: "ABC123def456GHI789jkl0mnopqrs"  # stored in Secret
-  cryptoPassphrase: "randomly_generated_secure_passphrase"  # stored in Secret
+  clientSecret: "ABC123def456GHI789jkl0mnopqrs" # stored in Secret
+  cryptoPassphrase: "randomly_generated_secure_passphrase" # stored in Secret
   providerTokenEndpointAuth: "client_secret_basic"
   remoteUserClaim: "preferred_username"
   scope: "openid email profile"
@@ -77,7 +77,7 @@ browserAccessBlocked: false
 # ---------------------------------------------------------------------------
 persistence:
   enabled: true
-  storageClass: ""  # leave empty to use cluster default
+  storageClass: "" # leave empty to use cluster default
   size: 10Gi
 
 # ---------------------------------------------------------------------------
@@ -90,10 +90,14 @@ service:
 # Ingress
 # ---------------------------------------------------------------------------
 ingress:
-  enabled: true
+  enabled: false
   host: "webdav.example.com"
-  annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: web, websecure
+  # annotations: {}
+  # Examples per ingress controller:
+  #   Traefik: traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+  #   nginx:   nginx.ingress.kubernetes.io/proxy-body-size: "0"
+  #   GKE:     kubernetes.io/ingress.class: "gce"
+  annotations: {}
   tls:
     enabled: false
     secretName: "webdav-tls"
