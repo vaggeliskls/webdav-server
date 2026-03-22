@@ -7,7 +7,7 @@ LABEL build_date="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
 LABEL license="MIT"
 
 # Install gettext for envsubst
-RUN apt-get update && apt-get install -y gettext-base libapache2-mod-auth-openidc
+RUN apt-get update && apt-get install -y gettext-base libapache2-mod-auth-openidc curl
 
 # Create a non-root user and group
 RUN groupadd -r webuser && useradd -r -g webuser webuser
