@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "webdav.name" . }}-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "webdav.labels" . | nindent 4 }}
+data:
+  SERVER_NAME: {{ .Values.serverName | quote }}
+  FOLDER_PERMISSIONS: {{ .Values.folderPermissions | quote }}
+  AUTO_CREATE_FOLDERS: {{ .Values.autoCreateFolders | quote }}
+  RO_METHODS: {{ .Values.roMethods | quote }}
+  RW_METHODS: {{ .Values.rwMethods | quote }}
+  BASIC_AUTH_ENABLED: {{ .Values.basicAuth.enabled | quote }}
+  DIGEST_AUTH_ENABLED: {{ .Values.digestAuth.enabled | quote }}
+  LDAP_ENABLED: {{ .Values.ldap.enabled | quote }}
+  LDAP_URL: {{ .Values.ldap.url | quote }}
+  LDAP_ATTRIBUTE: {{ .Values.ldap.attribute | quote }}
+  LDAP_BASE_DN: {{ .Values.ldap.baseDN | quote }}
+  LDAP_BIND_DN: {{ .Values.ldap.bindDN | quote }}
+  OAUTH_ENABLED: {{ .Values.oauth.enabled | quote }}
+  OIDCProviderMetadataURL: {{ .Values.oauth.providerMetadataURL | quote }}
+  OIDCRedirectURI: {{ .Values.oauth.redirectURI | quote }}
+  OIDCClientID: {{ .Values.oauth.clientID | quote }}
+  OIDCProviderTokenEndpointAuth: {{ .Values.oauth.providerTokenEndpointAuth | quote }}
+  OIDCRemoteUserClaim: {{ .Values.oauth.remoteUserClaim | quote }}
+  OIDCScope: {{ .Values.oauth.scope | quote }}
+  OIDCXForwardedHeaders: {{ .Values.oauth.xForwardedHeaders | quote }}
+  CORS_ENABLED: {{ .Values.cors.enabled | quote }}
+  CORS_ORIGIN: {{ .Values.cors.origin | quote }}
+  HEALTH_CHECK_ENABLED: {{ .Values.healthCheck.enabled | quote }}
+  BROWSER_ACCESS_BLOCKED: {{ .Values.browserAccessBlocked | quote }}

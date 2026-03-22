@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "webdav.name" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "webdav.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "webdav.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "webdav.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: webdav
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: {{ include "webdav.name" . }}-config
+            - secretRef:
+                name: {{ include "webdav.name" . }}-secret
+          {{- if .Values.persistence.enabled }}
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/dav/data
+          {{- end }}
+          {{- if .Values.healthCheck.enabled }}
+          livenessProbe:
+            httpGet:
+              path: /_health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /_health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- if .Values.persistence.enabled }}
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ include "webdav.name" . }}-data
+      {{- end }}
