@@ -1,0 +1,6 @@
+apiVersion: v2
+name: webdav-server
+description: A WebDAV server with flexible authentication and folder permissions
+type: application
+version: 0.1.0
+appVersion: "latest"

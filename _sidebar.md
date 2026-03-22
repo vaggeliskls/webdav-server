@@ -1,5 +1,6 @@
 - [Home](/)
 - [Use Cases](docs/use-cases)
 - [Examples](docs/examples)
+- [Kubernetes / Helm](docs/kubernetes)
 - [WebDAV Methods](docs/webdav-methods)
 - [Security Tests](docs/tests)

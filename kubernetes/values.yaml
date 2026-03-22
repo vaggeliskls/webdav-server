@@ -1,0 +1,114 @@
+image:
+  repository: ghcr.io/vaggeliskls/webdav-server
+  tag: latest
+  pullPolicy: Always
+
+replicaCount: 1
+
+serverName: "localhost"
+
+# Folder permissions — format: /path:users:mode (comma-separated)
+# users: "public" = no auth, "*" = any authenticated, "alice bob" = specific, "* !charlie" = exclude
+# mode: "ro" = read-only, "rw" = read-write
+folderPermissions: "/public:public:ro,/private:*:ro"
+autoCreateFolders: true
+
+# Allowed HTTP methods per access mode
+roMethods: "GET HEAD OPTIONS PROPFIND"
+rwMethods: "GET HEAD OPTIONS PROPFIND PUT DELETE MKCOL COPY MOVE LOCK UNLOCK PROPPATCH"
+
+# ---------------------------------------------------------------------------
+# Basic / Digest Authentication
+# ---------------------------------------------------------------------------
+basicAuth:
+  enabled: true
+  # Users format: "username:password" space-separated (stored in Secret)
+  users: "alice:alice123 bob:bob123"
+
+digestAuth:
+  enabled: false
+
+# ---------------------------------------------------------------------------
+# LDAP Authentication
+# ---------------------------------------------------------------------------
+ldap:
+  enabled: false
+  url: "ldaps://ldap.example.com"
+  attribute: "uid"
+  baseDN: "ou=users,dc=example,dc=com"
+  bindDN: "uid=searchuser,ou=users,dc=example,dc=com"
+  bindPassword: "securepassword" # stored in Secret
+
+# ---------------------------------------------------------------------------
+# OAuth / OpenID Connect Authentication
+# ---------------------------------------------------------------------------
+oauth:
+  enabled: false
+  providerMetadataURL: "http://keycloak/keycloak-auth/realms/master/.well-known/openid-configuration"
+  redirectURI: "http://my-domain.local/redirect_uri"
+  clientID: "webdav-client"
+  clientSecret: "ABC123def456GHI789jkl0mnopqrs" # stored in Secret
+  cryptoPassphrase: "randomly_generated_secure_passphrase" # stored in Secret
+  providerTokenEndpointAuth: "client_secret_basic"
+  remoteUserClaim: "preferred_username"
+  scope: "openid email profile"
+  xForwardedHeaders: "X-Forwarded-Host"
+
+# ---------------------------------------------------------------------------
+# CORS
+# ---------------------------------------------------------------------------
+cors:
+  enabled: false
+  origin: "*"
+
+# ---------------------------------------------------------------------------
+# Health check endpoint (GET /_health → 200 OK)
+# ---------------------------------------------------------------------------
+healthCheck:
+  enabled: true
+
+# ---------------------------------------------------------------------------
+# Browser access (returns 403 for Mozilla/* User-Agents)
+# ---------------------------------------------------------------------------
+browserAccessBlocked: false
+
+# ---------------------------------------------------------------------------
+# Persistent storage
+# ---------------------------------------------------------------------------
+persistence:
+  enabled: true
+  storageClass: "" # leave empty to use cluster default
+  size: 10Gi
+
+# ---------------------------------------------------------------------------
+# Service
+# ---------------------------------------------------------------------------
+service:
+  port: 80
+
+# ---------------------------------------------------------------------------
+# Ingress
+# ---------------------------------------------------------------------------
+ingress:
+  enabled: false
+  host: "webdav.example.com"
+  # annotations: {}
+  # Examples per ingress controller:
+  #   Traefik: traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+  #   nginx:   nginx.ingress.kubernetes.io/proxy-body-size: "0"
+  #   GKE:     kubernetes.io/ingress.class: "gce"
+  annotations: {}
+  tls:
+    enabled: false
+    secretName: "webdav-tls"
+
+# ---------------------------------------------------------------------------
+# Resources
+# ---------------------------------------------------------------------------
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    cpu: 500m
+    memory: 256Mi

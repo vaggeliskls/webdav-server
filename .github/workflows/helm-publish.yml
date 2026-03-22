@@ -1,0 +1,55 @@
+name: Publish Helm Chart
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "kubernetes/**"
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  helm:
+    name: Package and push Helm chart
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0 # required for tag history used by versioning
+
+      - name: Generate semver from conventional commits
+        id: version
+        uses: mathieudutour/github-tag-action@v6.2
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          dry_run: false # computes next version without creating a git tag
+          tag_prefix: helm-chart-v # scopes tags to the helm chart independently of docker releases
+          default_bump: patch # fallback bump type when no conventional commit keyword found
+          initial_version: 1.0.0
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+
+      - name: Login to GitHub Container Registry
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ${{ env.REGISTRY }} \
+            --username ${{ github.actor }} \
+            --password-stdin
+
+      - name: Package Helm chart
+        run: |
+          helm package kubernetes \
+            --version ${{ steps.version.outputs.new_version }} \
+            --app-version ${{ steps.version.outputs.new_version }}
+
+      - name: Push Helm chart to GHCR
+        run: |
+          helm push webdav-server-${{ steps.version.outputs.new_version }}.tgz \
+            oci://${{ env.REGISTRY }}/${{ github.repository_owner }}/webdav-server-chart
