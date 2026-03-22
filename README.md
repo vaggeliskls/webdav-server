@@ -154,6 +154,7 @@ See [Security Tests](docs/tests.md) for all scenarios and options.
 
 - [Use Cases](docs/use-cases.md)
 - [Deployment Examples](docs/examples.md)
+- [Kubernetes / Helm](docs/kubernetes.md)
 - [WebDAV Methods Reference](docs/webdav-methods.md)
 - [Security Tests](docs/tests.md)
 - [mod_auth_openidc](https://github.com/OpenIDC/mod_auth_openidc)
