@@ -4,10 +4,12 @@ Deploy the WebDAV server on Kubernetes using the Helm chart.
 
 ## Install the chart
 
+All published chart versions are available at [ghcr.io/vaggeliskls/charts/webdav-server](https://github.com/vaggeliskls/webdav-server/pkgs/container/charts%2Fwebdav-server).
+
 ```bash
 # From OCI registry (GitHub Packages)
-helm install webdav oci://ghcr.io/vaggeliskls/webdav-server-chart \
-  --version 1.0.0 \
+helm install webdav oci://ghcr.io/vaggeliskls/charts/webdav-server \
+  --version 0.1.0 \
   -n webdav --create-namespace
 
 # From local source
@@ -196,8 +198,8 @@ ingress:
 ## Upgrading
 
 ```bash
-helm upgrade webdav oci://ghcr.io/vaggeliskls/webdav-server-chart \
-  --version 1.1.0 \
+helm upgrade webdav oci://ghcr.io/vaggeliskls/charts/webdav-server \
+  --version 0.1.1 \
   -n webdav \
   -f my-values.yaml
 ```
