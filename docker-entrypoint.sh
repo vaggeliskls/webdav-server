@@ -7,6 +7,7 @@ FOLDERS_CONF="${CONF_DIR}/webdav-folders.conf"
 
 RO_METHODS="${RO_METHODS:-GET HEAD OPTIONS PROPFIND}"
 RW_METHODS="${RW_METHODS:-GET HEAD OPTIONS PROPFIND PUT DELETE MKCOL COPY MOVE LOCK UNLOCK PROPPATCH}"
+export DAV_LOCK_DB="${DAV_LOCK_DB:-/tmp/DavLock}"
 
 # ---------------------------------------------------------------------------
 # Write the auth directives block for a protected directory.
