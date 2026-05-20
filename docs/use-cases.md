@@ -27,14 +27,45 @@ BASIC_USERS="alice:alice123 bob:bob123"
 WebDAV is natively supported on all major operating systems — no extra software required.
 
 ### Windows
+
+**Prerequisite for plain HTTP:** Windows blocks Basic auth over unencrypted HTTP by default. Run this **once** in **PowerShell as Administrator** to allow it:
+
+```powershell
+Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\WebClient\Parameters" `
+    -Name "BasicAuthLevel" -Value 2 -Type DWord
+Set-Service WebClient -StartupType Automatic
+Restart-Service WebClient -Force
+```
+
+(Skip this step if your server is on `https://` — Basic auth is allowed over TLS by default.)
+
+Then either:
+
 1. Open **File Explorer** → **This PC** → **Map network drive**
 2. Enter `http://your-server/files/` as the folder
 3. Check **Connect using different credentials**, enter your username/password
 
 Or via command line:
 ```cmd
-net use Z: http://your-server/files/ /user:alice alice123
+net use Z: http://your-server/files/ /user:alice alice123 /persistent:yes
 ```
+
+**Using a custom/self-signed HTTPS certificate?** Install the cert (or its issuing CA) into the **Local Machine → Trusted Root Certification Authorities** store before mapping:
+```powershell
+Import-Certificate -FilePath "C:\path\to\cert.cer" -CertStoreLocation Cert:\LocalMachine\Root
+Restart-Service WebClient -Force
+```
+
+**Unmap the drive:**
+```cmd
+net use Z: /delete /y
+```
+Or in File Explorer: right-click the drive under **This PC** → **Disconnect**. To clear all mappings at once: `net use * /delete /y`.
+
+**Common errors:**
+- `System error 85` — drive letter already in use → `net use Z: /delete /y` then retry
+- `System error 1244` / *network path not found* — WebClient service stopped or `BasicAuthLevel` not applied (reboot if needed)
+- `System error 67` — URL unreachable; test in a browser first
 
 ### macOS
 1. **Finder** → **Go** → **Connect to Server** (`⌘K`)
@@ -46,6 +77,13 @@ Or via Terminal:
 open 'http://alice:alice123@your-server/files/'
 ```
 
+**Unmount:** click the eject icon next to the share in Finder's sidebar, or:
+```bash
+umount /Volumes/files
+# or, if it's busy:
+diskutil unmount force /Volumes/files
+```
+
 ### Linux
 Mount with `davfs2`:
 ```bash
@@ -54,6 +92,16 @@ sudo mount -t davfs http://your-server/files/ /mnt/webdav
 ```
 
 Or with GNOME Files (Nautilus): **Other Locations** → enter `dav://your-server/files/`
+
+**Unmount:**
+```bash
+sudo umount /mnt/webdav
+# if the mount is busy, find what's using it:
+sudo fuser -mv /mnt/webdav
+# then either close those processes or force-unmount:
+sudo umount -l /mnt/webdav   # lazy unmount
+```
+In Nautilus: click the eject icon next to the mounted share in the sidebar.
 
 ---
 
