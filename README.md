@@ -2,6 +2,10 @@
 
 A lightweight, Docker-based WebDAV server built on Apache httpd with flexible per-folder access control and multiple authentication options.
 
+> ⭐ **Find this useful?** Star the repo — it helps others discover the project.
+>
+> ☁️ **Looking for a managed cloud edition?** Check out [vaggeliskls/cloud-webdav-server](https://github.com/vaggeliskls/cloud-webdav-server).
+
 > **Pre-built image:** `ghcr.io/vaggeliskls/webdav-server:latest`
 
 > **Documentation:** https://vaggeliskls.github.io/webdav-server/
