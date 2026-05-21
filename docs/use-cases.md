@@ -62,10 +62,21 @@ net use Z: /delete /y
 ```
 Or in File Explorer: right-click the drive under **This PC** → **Disconnect**. To clear all mappings at once: `net use * /delete /y`.
 
+**Recommended server setting for Windows clients:**
+
+By default Apache redirects `/folder` → `/folder/` (trailing-slash redirect). Windows Mini-Redirector mishandles this on PROPFIND and shows subfolders as empty. Set this in your `.env` to disable the redirect:
+
+```env
+DIRECTORY_SLASH=Off
+```
+
+This is safe for all other WebDAV clients — they always use the canonical URI from PROPFIND responses.
+
 **Common errors:**
 - `System error 85` — drive letter already in use → `net use Z: /delete /y` then retry
 - `System error 1244` / *network path not found* — WebClient service stopped or `BasicAuthLevel` not applied (reboot if needed)
 - `System error 67` — URL unreachable; test in a browser first
+- Subfolders appear empty — set `DIRECTORY_SLASH=Off` on the server (see above)
 
 ### macOS
 1. **Finder** → **Go** → **Connect to Server** (`⌘K`)
