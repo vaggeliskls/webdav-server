@@ -74,11 +74,20 @@ This is safe for all other WebDAV clients — they always use the canonical URI 
 
 **Increase the 50 MB file size limit:**
 
-Windows WebDAV clients enforce a 50 MB upload cap by default. Run this **once** in **PowerShell as Administrator** to raise it to ~4 GB:
+Windows WebDAV clients enforce a 50 MB upload cap by default. Run this **once** in **PowerShell as Administrator** to change it:
 
 ```powershell
+# Set to maximum (~4 GB) — the value is a 32-bit field so 0xFFFFFFFF is the highest possible
 Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\WebClient\Parameters" `
     -Name FileSizeLimitInBytes -Value 0xFFFFFFFF -Type DWord
+
+# Or set a specific limit — multiply your desired MB by 1048576 (bytes per MB):
+#   500 MB  → 500  * 1048576 = 524288000
+#   1 GB    → 1024 * 1048576 = 1073741824
+#   2 GB    → 2048 * 1048576 = 2147483648
+Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\WebClient\Parameters" `
+    -Name FileSizeLimitInBytes -Value 524288000 -Type DWord   # example: 500 MB
+
 Restart-Service WebClient -Force
 ```
 
