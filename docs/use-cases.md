@@ -72,11 +72,22 @@ DIRECTORY_SLASH=Off
 
 This is safe for all other WebDAV clients — they always use the canonical URI from PROPFIND responses.
 
+**Increase the 50 MB file size limit:**
+
+Windows WebDAV clients enforce a 50 MB upload cap by default. Run this **once** in **PowerShell as Administrator** to raise it to ~4 GB:
+
+```powershell
+Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\WebClient\Parameters" `
+    -Name FileSizeLimitInBytes -Value 0xFFFFFFFF -Type DWord
+Restart-Service WebClient -Force
+```
+
 **Common errors:**
 - `System error 85` — drive letter already in use → `net use Z: /delete /y` then retry
 - `System error 1244` / *network path not found* — WebClient service stopped or `BasicAuthLevel` not applied (reboot if needed)
 - `System error 67` — URL unreachable; test in a browser first
 - Subfolders appear empty — set `DIRECTORY_SLASH=Off` on the server (see above)
+- *"File size exceeds the limits"* — run the `FileSizeLimitInBytes` fix above
 
 ### macOS
 1. **Finder** → **Go** → **Connect to Server** (`⌘K`)
