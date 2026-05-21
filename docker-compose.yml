@@ -14,9 +14,6 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.webdav.service=webdav"
       # Register Middleware ====================================================
-      - "traefik.http.routers.webdav.middlewares=compresstraefik"
-      # =================================================================================
-      - "traefik.http.middlewares.compresstraefik.compress=true"
       - "traefik.http.services.webdav.loadbalancer.server.port=8080"
       - "traefik.http.services.webdav.loadbalancer.passhostheader=true"
       ## Use PathPrefix rule to catch all requests

@@ -62,10 +62,41 @@ net use Z: /delete /y
 ```
 Or in File Explorer: right-click the drive under **This PC** → **Disconnect**. To clear all mappings at once: `net use * /delete /y`.
 
+**Recommended server setting for Windows clients:**
+
+By default Apache redirects `/folder` → `/folder/` (trailing-slash redirect). Windows Mini-Redirector mishandles this on PROPFIND and shows subfolders as empty. Set this in your `.env` to disable the redirect:
+
+```env
+DIRECTORY_SLASH=Off
+```
+
+This is safe for all other WebDAV clients — they always use the canonical URI from PROPFIND responses.
+
+**Increase the 50 MB file size limit:**
+
+Windows WebDAV clients enforce a 50 MB upload cap by default. Run this **once** in **PowerShell as Administrator** to change it:
+
+```powershell
+# Set to maximum (~4 GB) — the value is a 32-bit field so 0xFFFFFFFF is the highest possible
+Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\WebClient\Parameters" `
+    -Name FileSizeLimitInBytes -Value 0xFFFFFFFF -Type DWord
+
+# Or set a specific limit — multiply your desired MB by 1048576 (bytes per MB):
+#   500 MB  → 500  * 1048576 = 524288000
+#   1 GB    → 1024 * 1048576 = 1073741824
+#   2 GB    → 2048 * 1048576 = 2147483648
+Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\WebClient\Parameters" `
+    -Name FileSizeLimitInBytes -Value 524288000 -Type DWord   # example: 500 MB
+
+Restart-Service WebClient -Force
+```
+
 **Common errors:**
 - `System error 85` — drive letter already in use → `net use Z: /delete /y` then retry
 - `System error 1244` / *network path not found* — WebClient service stopped or `BasicAuthLevel` not applied (reboot if needed)
 - `System error 67` — URL unreachable; test in a browser first
+- Subfolders appear empty — set `DIRECTORY_SLASH=Off` on the server (see above)
+- *"File size exceeds the limits"* — run the `FileSizeLimitInBytes` fix above
 
 ### macOS
 1. **Finder** → **Go** → **Connect to Server** (`⌘K`)
