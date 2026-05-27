@@ -35,7 +35,7 @@ jobs:
           default_bump: patch # fallback bump type when no conventional commit keyword found
 
       - name: Install Helm
-        uses: azure/setup-helm@v4
+        uses: azure/setup-helm@v5
 
       - name: Login to GitHub Container Registry
         run: |
