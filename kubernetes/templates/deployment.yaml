@@ -17,10 +17,18 @@ spec:
       labels:
         {{- include "webdav.selectorLabels" . | nindent 8 }}
     spec:
+      {{- if .Values.podSecurityContext }}
+      securityContext:
+        {{- include "webdav.podSecurityContext" . | nindent 8 }}
+      {{- end }}
       containers:
         - name: webdav
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- with .Values.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           ports:
             - containerPort: 8080
           envFrom:

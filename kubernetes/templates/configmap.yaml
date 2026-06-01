@@ -11,6 +11,9 @@ data:
   AUTO_CREATE_FOLDERS: {{ .Values.autoCreateFolders | quote }}
   RO_METHODS: {{ .Values.roMethods | quote }}
   RW_METHODS: {{ .Values.rwMethods | quote }}
+  LIMIT_REQUEST_BODY: {{ .Values.requestHardening.limitRequestBody | quote }}
+  LIMIT_XML_REQUEST_BODY: {{ .Values.requestHardening.limitXmlRequestBody | quote }}
+  DAV_DEPTH_INFINITY: {{ .Values.requestHardening.davDepthInfinity | quote }}
   BASIC_AUTH_ENABLED: {{ .Values.basicAuth.enabled | quote }}
   DIGEST_AUTH_ENABLED: {{ .Values.digestAuth.enabled | quote }}
   LDAP_ENABLED: {{ .Values.ldap.enabled | quote }}

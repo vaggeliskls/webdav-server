@@ -285,12 +285,14 @@ test_security_headers() {
 
     headers=$(curl -s -I --connect-timeout 5 "${BASE_URL}/")
 
+    # These are set unconditionally in virtualhost.conf ("Header always set"),
+    # so they must be present on every response — including this 403.
     check_header() {
         local header="$1"
         if echo "$headers" | grep -qi "$header"; then
             pass "Header present: $header"
         else
-            skip "Header missing: $header (consider adding to virtualhost.conf)"
+            fail "Header missing: $header (expected from virtualhost.conf)"
         fi
     }
 
@@ -298,12 +300,68 @@ test_security_headers() {
     check_header "X-Frame-Options"
     check_header "Referrer-Policy"
 
+    # ServerTokens Prod — the Server header must not leak the Apache version/OS.
+    server_hdr=$(echo "$headers" | grep -i "^server:")
+    if echo "$server_hdr" | grep -qiE "apache/[0-9]"; then
+        fail "Server header leaks version (set ServerTokens Prod): $server_hdr"
+    else
+        pass "Server header does not leak version (ServerTokens Prod)"
+    fi
+
     # If CORS is enabled, check CORS header
     if echo "$headers" | grep -qi "Access-Control-Allow-Origin"; then
         pass "CORS header present: Access-Control-Allow-Origin"
     else
         skip "CORS header not present (expected if CORS_ENABLED=false)"
     fi
+}
+
+test_dav_depth_infinity() {
+    print_header "DavDepthInfinity Off (recursive PROPFIND)"
+
+    # Needs a PROPFIND-able location; use the public folder. Skip if it isn't
+    # reachable in this scenario (e.g. no public folder configured).
+    local depth0
+    depth0=$(http_status -X PROPFIND -H "Depth: 0" "${BASE_URL}${PUBLIC_FOLDER}/")
+    if [ "$depth0" != "207" ]; then
+        skip "Public folder not PROPFIND-able (HTTP $depth0) — skipping depth-infinity check"
+        return
+    fi
+
+    assert_status_in \
+        "PROPFIND Depth: infinity refused (DavDepthInfinity Off)" \
+        "403" \
+        -X PROPFIND -H "Depth: infinity" "${BASE_URL}${PUBLIC_FOLDER}/"
+}
+
+test_xml_request_body_limit() {
+    print_header "LimitXMLRequestBody (oversized control body)"
+
+    # Needs valid creds on a PROPFIND-able private folder. Skip otherwise
+    # (e.g. LDAP/OAuth scenarios where these Basic creds don't apply).
+    local ok
+    ok=$(http_status -u "$TEST_USER" -X PROPFIND -H "Depth: 0" "${BASE_URL}${PRIVATE_FOLDER}/")
+    if [ "$ok" != "207" ]; then
+        skip "Private folder not PROPFIND-able with test creds (HTTP $ok) — skipping XML-limit check"
+        return
+    fi
+
+    # ~1.1 MiB body, over the 1 MiB LimitXMLRequestBody default.
+    local big_xml
+    big_xml=$(mktemp)
+    {
+        printf '<?xml version="1.0"?><propfind xmlns="DAV:"><prop><x>'
+        head -c 1100000 /dev/zero | tr '\0' 'A'
+        printf '</x></prop></propfind>'
+    } > "$big_xml"
+
+    assert_status_in \
+        "Oversized XML PROPFIND body rejected (LimitXMLRequestBody)" \
+        "413" \
+        -u "$TEST_USER" -X PROPFIND -H "Depth: 0" -H "Content-Type: text/xml" \
+        --data-binary @"$big_xml" "${BASE_URL}${PRIVATE_FOLDER}/"
+
+    rm -f "$big_xml"
 }
 
 test_health_check() {
@@ -339,6 +397,8 @@ test_write_permissions
 test_path_traversal
 test_user_isolation
 test_security_headers
+test_dav_depth_infinity
+test_xml_request_body_limit
 test_health_check
 
 # ---------------------------------------------------------------------------

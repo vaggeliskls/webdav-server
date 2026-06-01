@@ -10,6 +10,14 @@ RW_METHODS="${RW_METHODS:-GET HEAD OPTIONS PROPFIND PUT DELETE MKCOL COPY MOVE L
 export DAV_LOCK_DB="${DAV_LOCK_DB:-/tmp/DavLock}"
 export DIRECTORY_SLASH="${DIRECTORY_SLASH:-On}"
 
+# Request-hardening knobs (consumed by webdav.conf.template via envsubst).
+# Defaults are chosen to preserve prior behaviour except where the secure
+# default is harmless: LIMIT_REQUEST_BODY=0 keeps uploads unlimited;
+# DAV_DEPTH_INFINITY=Off blocks only recursive PROPFIND.
+export LIMIT_REQUEST_BODY="${LIMIT_REQUEST_BODY:-0}"
+export LIMIT_XML_REQUEST_BODY="${LIMIT_XML_REQUEST_BODY:-1048576}"
+export DAV_DEPTH_INFINITY="${DAV_DEPTH_INFINITY:-Off}"
+
 # ---------------------------------------------------------------------------
 # Write the auth directives block for a protected directory.
 # Depends on the active auth method (LDAP / OAuth / Basic / Digest).

@@ -21,7 +21,7 @@ RUN mkdir -p "/var/www/html" && \
 RUN for i in \
     authn_core authn_file authz_core authz_user \
     ldap authnz_ldap ssl auth_basic auth_digest authn_dbm \
-    alias headers mime setenvif \
+    alias headers mime setenvif reqtimeout \
     dav dav_fs; \
     do \
     sed -i -e "/^#LoadModule ${i}_module.*/s/^#//" /usr/local/apache2/conf/httpd.conf; \
@@ -44,6 +44,11 @@ RUN sed -i 's/Listen 80/Listen 8080/' /usr/local/apache2/conf/httpd.conf && \
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 # Make the entrypoint script executable
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+# Allow running as an arbitrary UID with GID 0 (e.g. OpenShift). Done last so
+# it also covers the copied templates and the httpd.conf edited above.
+RUN chgrp -R 0 "/var/www/html" "/var/lib/dav" "/usr/local/apache2" && \
+    chmod -R g=u "/var/www/html" "/var/lib/dav" "/usr/local/apache2"
 
 # Expose the new higher ports
 EXPOSE 8080/tcp 8443/tcp

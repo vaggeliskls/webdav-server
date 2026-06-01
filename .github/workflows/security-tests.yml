@@ -25,3 +25,5 @@ jobs:
         run: ./tests/scenario-4-public-only.sh --no-build
       - name: "LDAP authentication"
         run: ./tests/scenario-5-ldap.sh --no-build
+      - name: "Write operations"
+        run: ./tests/scenario-6-write-ops.sh --no-build
