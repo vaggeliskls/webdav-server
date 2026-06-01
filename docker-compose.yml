@@ -10,6 +10,19 @@ services:
       - webdav-network
     env_file:
       - .env
+    # --- Runtime hardening -------------------------------------------------
+    # Container already runs as non-root (USER webuser) and binds :8080, so
+    # no capabilities are needed. read_only is NOT set: the entrypoint writes
+    # generated Apache config into /usr/local/apache2/conf at startup.
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1g
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.webdav.service=webdav"
@@ -19,6 +32,19 @@ services:
       ## Use PathPrefix rule to catch all requests
       - "traefik.http.routers.webdav.rule=PathPrefix(`/`)"
       - "traefik.http.routers.webdav.entrypoints=web,websecure"
+      # Rate limiting + connection cap (per client IP) ========================
+      # average/burst/period throttle request rate; inflightreq caps
+      # simultaneous in-flight requests. Tune to your real traffic.
+      - "traefik.http.middlewares.webdav-ratelimit.ratelimit.average=20"
+      - "traefik.http.middlewares.webdav-ratelimit.ratelimit.burst=40"
+      - "traefik.http.middlewares.webdav-ratelimit.ratelimit.period=1s"
+      # Limit is keyed on the direct client IP (Traefik's default). Clients
+      # connect to Traefik directly here, so do NOT trust X-Forwarded-For —
+      # a spoofed XFF would let an attacker rotate keys and bypass the limit.
+      # Only if a CDN/proxy sits IN FRONT of Traefik, add (depth = trusted hops):
+      #   traefik.http.middlewares.webdav-ratelimit.ratelimit.sourcecriterion.ipstrategy.depth=1
+      - "traefik.http.middlewares.webdav-inflight.inflightreq.amount=50"
+      - "traefik.http.routers.webdav.middlewares=webdav-ratelimit,webdav-inflight"
 
   webdav-proxy:
     image: traefik:v3
@@ -32,7 +58,10 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
+      # Read-only: Traefik only needs to read the Docker API, never write it.
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    security_opt:
+      - no-new-privileges:true
     networks:
       - webdav-network
 

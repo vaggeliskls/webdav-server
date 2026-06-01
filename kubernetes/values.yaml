@@ -18,6 +18,20 @@ roMethods: "GET HEAD OPTIONS PROPFIND"
 rwMethods: "GET HEAD OPTIONS PROPFIND PUT DELETE MKCOL COPY MOVE LOCK UNLOCK PROPPATCH"
 
 # ---------------------------------------------------------------------------
+# Request hardening (DoS / resource-exhaustion mitigations)
+# ---------------------------------------------------------------------------
+requestHardening:
+  # Quoted so Helm emits the exact digits — large ints otherwise render in
+  # scientific notation (e.g. 1.048576e+06), which Apache rejects.
+  # Max upload (PUT) body size in bytes. "0" = unlimited (default).
+  limitRequestBody: "0"
+  # Max WebDAV XML control body size in bytes (PROPFIND/PROPPATCH/LOCK).
+  # Does not affect file uploads. Default 1 MiB.
+  limitXmlRequestBody: "1048576"
+  # Allow recursive "Depth: infinity" PROPFIND. "Off" = blocked (recommended).
+  davDepthInfinity: "Off"
+
+# ---------------------------------------------------------------------------
 # Basic / Digest Authentication
 # ---------------------------------------------------------------------------
 basicAuth:
@@ -107,8 +121,30 @@ ingress:
 # ---------------------------------------------------------------------------
 resources:
   requests:
-    cpu: 50m
-    memory: 64Mi
+    cpu: 100m
+    memory: 128Mi
   limits:
-    cpu: 500m
-    memory: 256Mi
+    cpu: "1"
+    memory: 1Gi
+
+# ---------------------------------------------------------------------------
+# Security context (pod- and container-level hardening)
+# Mirrors the docker-compose runtime hardening: non-root, no privilege
+# escalation, all capabilities dropped, default seccomp profile.
+# ---------------------------------------------------------------------------
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 999 # matches the existing 'webuser' UID baked into the image
+  runAsGroup: 999
+  fsGroup: 999 # makes the mounted PVC writable by the non-root user
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  allowPrivilegeEscalation: false
+  # Left false: the entrypoint writes generated Apache config into
+  # /usr/local/apache2/conf at startup, so the root FS must stay writable.
+  readOnlyRootFilesystem: false
+  capabilities:
+    drop:
+      - ALL

@@ -291,6 +291,12 @@ services:
       - "traefik.http.routers.webdav.rule=Host(`files.mydomain.com`)"
       - "traefik.http.routers.webdav.entrypoints=web"
       - "traefik.http.services.webdav.loadbalancer.server.port=8080"
+      # --- Rate limiting + connection cap (per client IP) ------------------
+      - "traefik.http.middlewares.webdav-ratelimit.ratelimit.average=20"
+      - "traefik.http.middlewares.webdav-ratelimit.ratelimit.burst=40"
+      - "traefik.http.middlewares.webdav-ratelimit.ratelimit.period=1s"
+      - "traefik.http.middlewares.webdav-inflight.inflightreq.amount=50"
+      - "traefik.http.routers.webdav.middlewares=webdav-ratelimit,webdav-inflight"
 
   traefik:
     image: traefik:v3.6.9
@@ -301,7 +307,8 @@ services:
     ports:
       - "80:80"
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
+      # Read-only: Traefik only needs to read the Docker API, never write it.
+      - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
       - proxy
 
@@ -309,6 +316,12 @@ networks:
   proxy:
     driver: bridge
 ```
+
+> **Tuning:** `average`/`burst`/`period` throttle the request *rate* per client
+> IP; `inflightreq.amount` caps *simultaneous* in-flight requests. The limit is
+> keyed on the direct client IP by default — only add an
+> `ipstrategy.depth` if a CDN/proxy sits **in front of** Traefik, otherwise a
+> spoofed `X-Forwarded-For` can bypass it.
 
 ---
 
