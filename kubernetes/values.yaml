@@ -1,6 +1,8 @@
 image:
   repository: ghcr.io/vaggeliskls/webdav-server
-  tag: latest
+  # Defaults to the chart's appVersion (= the release version the chart was
+  # published with). Set explicitly to pin a different image, e.g. "latest".
+  tag: ""
   pullPolicy: Always
 
 replicaCount: 1
