@@ -119,7 +119,9 @@ OIDCRemoteUserClaim="preferred_username"
 OIDCScope="openid email profile"
 ```
 
-> More provider examples: [mod_auth_openidc](https://github.com/OpenIDC/mod_auth_openidc)
+> When using `FOLDER_PERMISSIONS`, `OIDCRedirectURI` must point inside an OIDC-protected folder (e.g. `/files/redirect_uri`).
+>
+> Dex example: see **OAuth / OIDC with Dex** in [Examples](docs/examples.md). More provider examples: [mod_auth_openidc](https://github.com/OpenIDC/mod_auth_openidc)
 
 ## 🛠️ Method Control
 
