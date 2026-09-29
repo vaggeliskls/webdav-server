@@ -1,4 +1,4 @@
-name: Create WebDav Docker Image
+name: Build
 
 on:
   release:
@@ -51,3 +51,41 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           platforms: linux/amd64,linux/arm64
+
+  helm:
+    name: Helm Chart
+    # Publish the chart only after the image it points to exists
+    needs: webdav
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout current repository
+        uses: actions/checkout@v7
+
+      # Chart version = release tag (leading "v" stripped, matching the
+      # docker/metadata-action semver image tag), so chart X deploys image X.
+      - name: Resolve chart version
+        id: version
+        run: echo "version=${TAG_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Install Helm
+        uses: azure/setup-helm@v5
+
+      - name: Login to GitHub Container Registry
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ${{ env.REGISTRY }} \
+            --username ${{ github.actor }} \
+            --password-stdin
+
+      - name: Package Helm chart
+        run: |
+          helm package kubernetes \
+            --version ${{ steps.version.outputs.version }} \
+            --app-version ${{ steps.version.outputs.version }}
+
+      - name: Push Helm chart to GHCR
+        run: |
+          helm push webdav-server-${{ steps.version.outputs.version }}.tgz \
+            oci://${{ env.REGISTRY }}/${{ github.repository_owner }}/charts

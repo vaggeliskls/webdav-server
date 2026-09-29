@@ -6,10 +6,12 @@ Deploy the WebDAV server on Kubernetes using the Helm chart.
 
 All published chart versions are available at [ghcr.io/vaggeliskls/charts/webdav-server](https://github.com/vaggeliskls/webdav-server/pkgs/container/charts%2Fwebdav-server).
 
+The chart is published with every [release](https://github.com/vaggeliskls/webdav-server/releases), and its version matches the release tag: chart `2.4.0` deploys the image `ghcr.io/vaggeliskls/webdav-server:2.4.0`. Set `image.tag` to deploy a different image.
+
 ```bash
 # From OCI registry (GitHub Packages)
 helm install webdav oci://ghcr.io/vaggeliskls/charts/webdav-server \
-  --version 0.1.0 \
+  --version 2.4.0 \
   -n webdav --create-namespace
 
 # From local source
@@ -22,7 +24,7 @@ helm install webdav ./kubernetes \
 ## 1. 🌍 Public read-only server (no auth)
 
 ```bash
-helm install webdav oci://ghcr.io/vaggeliskls/webdav-server-chart \
+helm install webdav oci://ghcr.io/vaggeliskls/charts/webdav-server \
   -n webdav --create-namespace \
   --set folderPermissions="/files:public:ro" \
   --set autoCreateFolders=true \
@@ -45,7 +47,7 @@ ingress:
 ```
 
 ```bash
-helm install webdav oci://ghcr.io/vaggeliskls/webdav-server-chart \
+helm install webdav oci://ghcr.io/vaggeliskls/charts/webdav-server \
   -n webdav --create-namespace \
   -f values-public.yaml
 ```
@@ -67,7 +69,7 @@ ingress:
 ```
 
 ```bash
-helm install webdav oci://ghcr.io/vaggeliskls/webdav-server-chart \
+helm install webdav oci://ghcr.io/vaggeliskls/charts/webdav-server \
   -n webdav --create-namespace \
   -f values-basic-auth.yaml
 ```
@@ -199,7 +201,7 @@ ingress:
 
 ```bash
 helm upgrade webdav oci://ghcr.io/vaggeliskls/charts/webdav-server \
-  --version 0.1.1 \
+  --version 2.4.0 \
   -n webdav \
   -f my-values.yaml
 ```
