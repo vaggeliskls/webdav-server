@@ -280,7 +280,7 @@ docker run --rm -p 8080:8080 \
 
 ## 🔒 SSO-protected Enterprise Storage
 
-Integrate with an existing identity provider (Keycloak, Okta, Azure AD) via OAuth/OIDC so employees authenticate with their corporate credentials — no separate password management.
+Integrate with an existing identity provider (Keycloak, Dex, Okta, Azure AD) via OAuth/OIDC so employees authenticate with their corporate credentials — no separate password management.
 
 ```env
 FOLDER_PERMISSIONS="/company:*:rw"

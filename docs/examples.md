@@ -325,6 +325,60 @@ networks:
 
 ---
 
+## 9. 🔐 OAuth / OIDC with Dex
+
+Log in through a [Dex](https://dexidp.io/) identity provider (which can itself federate GitHub, LDAP, Google, …). Any user who signs in through Dex can access `/files`.
+
+**1. Register the WebDAV server as a client in the Dex config:**
+
+```yaml
+# dex config.yaml
+issuer: https://dex.example.com
+
+staticClients:
+  - id: webdav-client
+    name: WebDAV
+    secret: <random-client-secret>   # e.g. openssl rand -hex 24
+    redirectURIs:
+      - https://files.example.com/files/redirect_uri
+```
+
+**2. Point the WebDAV server at Dex:**
+
+```yaml
+# docker-compose.yml
+services:
+  webdav:
+    image: ghcr.io/vaggeliskls/webdav-server:latest
+    ports:
+      - "80:8080"
+    volumes:
+      - ./data:/var/lib/dav/data
+    environment:
+      SERVER_NAME: files.example.com
+      FOLDER_PERMISSIONS: "/files:*:rw"
+      AUTO_CREATE_FOLDERS: "true"
+      OAUTH_ENABLED: "true"
+      OIDCProviderMetadataURL: "https://dex.example.com/.well-known/openid-configuration"
+      OIDCRedirectURI: "https://files.example.com/files/redirect_uri"
+      OIDCCryptoPassphrase: "<random-passphrase>"   # e.g. openssl rand -hex 32
+      OIDCClientID: "webdav-client"
+      OIDCClientSecret: "<random-client-secret>"    # same value as in the Dex config
+      OIDCRemoteUserClaim: "email"
+      OIDCScope: "openid email profile"
+```
+
+Open `https://files.example.com/files/` in a browser. You are redirected to Dex, and after logging in you land back on the folder listing.
+
+> **Notes**
+> - `OIDCProviderMetadataURL` is Dex's `issuer` + `/.well-known/openid-configuration`. It must match the issuer exactly (Dex is often served under `/dex`, e.g. `https://example.com/dex`), and it must be reachable from both the container and the browser.
+> - `OIDCRedirectURI` must be inside a folder that uses OIDC auth (here `/files`). A redirect URI outside every `FOLDER_PERMISSIONS` entry returns 403 after login. It must also be listed in the Dex client's `redirectURIs`.
+> - Dex always provides the `email` claim, but `preferred_username` depends on the connector (the local password DB, for example, does not set it). With `OIDCRemoteUserClaim: "email"`, list emails to restrict folders: `"/files:alice@example.com bob@example.com:rw"`.
+> - OIDC is a browser login flow. WebDAV clients such as Windows Explorer, macOS Finder or rclone cannot complete the redirect, so use Basic/LDAP auth for them.
+> - For local testing, `http://localhost/files/redirect_uri` works as a redirect URI. If Dex runs on the same machine, use `http://host.docker.internal:5556/dex` as the issuer, because `localhost` inside the container is the container itself.
+
+---
+
 ## 11. 🧩 With CORS and health check
 
 Enable CORS for web clients and expose a health check endpoint for uptime monitoring.
