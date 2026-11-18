@@ -1,4 +1,4 @@
-FROM httpd:2.4.68
+FROM httpd:2.4.71
 
 # Metadata labels
 LABEL maintainer="vaggeliskls <https://github.com/vaggeliskls>"
