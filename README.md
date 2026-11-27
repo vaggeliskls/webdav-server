@@ -63,6 +63,34 @@ Folders are auto-created at startup (`AUTO_CREATE_FOLDERS=true`).
 
 Leave `FOLDER_PERMISSIONS` empty to fall back to single-root mode (all paths, one auth method).
 
+### Default-deny access and folder traversal
+
+A deny policy is implemented by default on the root level (/var/lib/dav/data) which prevents folder traversal from the root folder to accessible child directories. You can allow folder traversal by overwriting the default-deny rule and assigning wildcard paths to a username that does not exist (e.g. `nobody`). This allows folder traversal while preventing users from accessing folders unless they have been explicitly granted permission.
+
+For example:
+
+    FOLDER_PERMISSIONS="/:*:ro,/*:nobody:ro,/homes/:*:ro,/homes/*:nobody:ro,/public:public:ro,/homes/alice:alice:rw,/homes/bob:bob:rw"
+
+This configuration works as follows:
+
+| Path | Permission | Description |
+|---|---|---|
+| `/` | `*:ro` | Allow all authenticated users to browse the root directory |
+| `/*` | `nobody:ro` | Deny access to all top-level folders by default |
+| `/homes/` | `*:ro` | Allow users to browse the homes directory |
+| `/homes/*` | `nobody:ro` | Deny access to individual home directories by default |
+| `/public` | `public:ro` | Allow unauthenticated read-only access |
+| `/homes/alice` | `alice:rw` | Allow Alice read/write access |
+| `/homes/bob` | `bob:rw` | Allow Bob read/write access |
+
+**Why are both `/homes/` and `/homes/*` needed?**
+
+The `/homes/` entry allows users to navigate through the parent directory, while `/homes/*` denies access to individual home directories unless an explicit permission entry exists.
+
+This distinction is important because denying access to a parent directory also prevents users from navigating to otherwise accessible child directories.
+
+**Important:** The username used for default-deny entries (e.g. `nobody`) must not exist in the configured user database. Otherwise, that user will have access to the wildcard-matched directories. `AUTO_CREATE_FOLDERS` should be disabled, otherwise `*` folders may be created.
+
 ## 🔐 Authentication
 
 Set auth method via environment variables. Authentication applies to all non-public folders.
